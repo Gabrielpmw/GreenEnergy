@@ -128,6 +128,19 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Seeder Hook para CLI
+if (args.Contains("--seed-db"))
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Console.WriteLine("Limpando e populando o banco de dados com 25 clientes e 5 operadores...");
+        GreenEnergy.API.Data.DbSeedHelper.SeedDatabase(db);
+        Console.WriteLine("Banco de dados populado com sucesso!");
+    }
+    return;
+}
+
 // 6. Pipeline HTTP Middleware
 
 // Middleware global de tratamento de exceções (tlc-spec-driven)
