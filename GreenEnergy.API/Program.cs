@@ -41,6 +41,8 @@ builder.Services.AddScoped<IChamadoRepository, ChamadoRepository>();
 builder.Services.AddScoped<ISensorRepository, SensorRepository>();
 builder.Services.AddScoped<IMetaRepository, MetaRepository>();
 builder.Services.AddScoped<IRelatorioTecnicoRepository, RelatorioTecnicoRepository>();
+builder.Services.AddScoped<ITarifaRepository, TarifaRepository>();
+builder.Services.AddScoped<IConfiguracaoAPIRepository, ConfiguracaoAPIRepository>();
 
 // Registrar Serviços
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -53,6 +55,10 @@ builder.Services.AddScoped<ICategoriaAparelhoService, CategoriaAparelhoService>(
 builder.Services.AddScoped<IChamadoService, ChamadoService>();
 builder.Services.AddScoped<IMetaService, MetaService>();
 builder.Services.AddScoped<IRelatorioTecnicoService, RelatorioTecnicoService>();
+builder.Services.AddScoped<ITarifaService, TarifaService>();
+builder.Services.AddScoped<IConfiguracaoAPIService, ConfiguracaoAPIService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 
 // Registrar Integrações
 builder.Services.AddHttpClient<IViaCepClient, ViaCepClient>();

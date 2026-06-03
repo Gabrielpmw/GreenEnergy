@@ -50,6 +50,37 @@ namespace GreenEnergy.Worker.Workers
             {
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
+                // Registrar/Atualizar batimento cardíaco (Heartbeat) do Worker
+                try
+                {
+                    var heartbeatConfig = await db.ConfiguracoesAPI
+                        .FirstOrDefaultAsync(x => x.NomeAPI == "Worker_Heartbeat");
+
+                    if (heartbeatConfig == null)
+                    {
+                        heartbeatConfig = new ConfiguracaoAPI
+                        {
+                            NomeAPI = "Worker_Heartbeat",
+                            ChaveAcesso = DateTime.UtcNow.ToString("O"),
+                            BaseUrl = "LocalWorker",
+                            IsActive = true,
+                            IsDeleted = false
+                        };
+                        await db.ConfiguracoesAPI.AddAsync(heartbeatConfig);
+                    }
+                    else
+                    {
+                        heartbeatConfig.ChaveAcesso = DateTime.UtcNow.ToString("O");
+                        heartbeatConfig.AtualizadoEm = DateTime.UtcNow;
+                        db.ConfiguracoesAPI.Update(heartbeatConfig);
+                    }
+                    await db.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Falha ao registrar batimento cardíaco (Heartbeat) do Worker.");
+                }
+
                 // Buscar sensores em uso e seus respectivos dispositivos ativos e não deletados
                 var sensores = await db.Sensores
                     .Include(s => s.Dispositivo)
