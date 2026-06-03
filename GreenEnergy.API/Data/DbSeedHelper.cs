@@ -47,11 +47,11 @@ namespace GreenEnergy.API.Data
             // 5 CEPs reais com endereços estruturados para agrupamento de 5 em 5 usuários
             var ceps = new[] 
             {
-                new { CEP = "13480001", Cidade = "Limeira", UF = "SP", Logradouro = "Rua Santa Cruz", Bairro = "Centro" },
-                new { CEP = "13480002", Cidade = "Limeira", UF = "SP", Logradouro = "Avenida Rio Claro", Bairro = "Vila Queiroz" },
-                new { CEP = "01001000", Cidade = "São Paulo", UF = "SP", Logradouro = "Praça da Sé", Bairro = "Sé" },
-                new { CEP = "13010000", Cidade = "Campinas", UF = "SP", Logradouro = "Rua General Osório", Bairro = "Centro" },
-                new { CEP = "20040002", Cidade = "Rio de Janeiro", UF = "RJ", Logradouro = "Avenida Nilo Peçanha", Bairro = "Centro" }
+                new { CEP = "13480001", Cidade = "Limeira", UF = "SP", Logradouro = "Rua Santa Cruz", Bairro = "Centro", CodigoIBGE = "3526902" },
+                new { CEP = "13480002", Cidade = "Limeira", UF = "SP", Logradouro = "Avenida Rio Claro", Bairro = "Vila Queiroz", CodigoIBGE = "3526902" },
+                new { CEP = "01001000", Cidade = "São Paulo", UF = "SP", Logradouro = "Praça da Sé", Bairro = "Sé", CodigoIBGE = "3550308" },
+                new { CEP = "13010000", Cidade = "Campinas", UF = "SP", Logradouro = "Rua General Osório", Bairro = "Centro", CodigoIBGE = "3509502" },
+                new { CEP = "20040002", Cidade = "Rio de Janeiro", UF = "RJ", Logradouro = "Avenida Nilo Peçanha", Bairro = "Centro", CodigoIBGE = "3304557" }
             };
 
             // Hashes de senha padrão
@@ -213,6 +213,7 @@ namespace GreenEnergy.API.Data
                         CEP = cepInfo.CEP,
                         Cidade = cepInfo.Cidade,
                         Estado = cepInfo.UF,
+                        CodigoIBGE = cepInfo.CodigoIBGE,
                         IsActive = true,
                         IsDeleted = false
                     };
