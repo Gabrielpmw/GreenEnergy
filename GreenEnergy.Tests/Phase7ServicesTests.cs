@@ -237,15 +237,19 @@ namespace GreenEnergy.Tests
             db.Dispositivos.AddRange(d1, d2);
             await db.SaveChangesAsync();
 
+            // Seed Sensores
+            var s1 = new Sensor { DispositivoId = d1.Id, ModeloSensor = "M1", NumeroSerie = "N1", Status = SensorStatus.EmUso, IsActive = true, IsDeleted = false };
+            var s2 = new Sensor { DispositivoId = d2.Id, ModeloSensor = "M2", NumeroSerie = "N2", Status = SensorStatus.EmUso, IsActive = true, IsDeleted = false };
+            db.Sensores.AddRange(s1, s2);
+            await db.SaveChangesAsync();
+
             // Seed Telemetrias (u1 has 40 kWh, u2 has 60 kWh)
             // Regional average = (40 + 60) / 2 = 50 kWh.
             // Client 1 average = 40 kWh (20% less than regional average)
-            var t1 = new Telemetria { SensorId = 1, ConsumoKWh = 40.0, RegistradoEm = DateTime.UtcNow };
-            var t2 = new Telemetria { SensorId = 2, ConsumoKWh = 60.0, RegistradoEm = DateTime.UtcNow };
-            
-            // Link mock sensors to map correctly or add directly to devices
-            d1.Telemetrias.Add(t1);
-            d2.Telemetrias.Add(t2);
+            var t1 = new Telemetria { SensorId = s1.Id, ConsumoKWh = 40.0, RegistradoEm = DateTime.UtcNow };
+            var t2 = new Telemetria { SensorId = s2.Id, ConsumoKWh = 60.0, RegistradoEm = DateTime.UtcNow };
+            s1.Telemetrias.Add(t1);
+            s2.Telemetrias.Add(t2);
             await db.SaveChangesAsync();
 
             var service = new EnderecoService(db, new FakeViaCepClient(), null!);
@@ -287,14 +291,19 @@ namespace GreenEnergy.Tests
             db.Dispositivos.AddRange(d1, d2);
             await db.SaveChangesAsync();
 
+            // Seed Sensores
+            var s1 = new Sensor { DispositivoId = d1.Id, ModeloSensor = "M1", NumeroSerie = "N1", Status = SensorStatus.EmUso, IsActive = true, IsDeleted = false };
+            var s2 = new Sensor { DispositivoId = d2.Id, ModeloSensor = "M2", NumeroSerie = "N2", Status = SensorStatus.EmUso, IsActive = true, IsDeleted = false };
+            db.Sensores.AddRange(s1, s2);
+            await db.SaveChangesAsync();
+
             // Seed Telemetrias (u1 has 120 kWh, u2 has 80 kWh)
             // Regional average = (120 + 80) / 2 = 100 kWh.
             // Client 1 average = 120 kWh (20% more than regional average)
-            var t1 = new Telemetria { SensorId = 1, ConsumoKWh = 120.0, RegistradoEm = DateTime.UtcNow };
-            var t2 = new Telemetria { SensorId = 2, ConsumoKWh = 80.0, RegistradoEm = DateTime.UtcNow };
-            
-            d1.Telemetrias.Add(t1);
-            d2.Telemetrias.Add(t2);
+            var t1 = new Telemetria { SensorId = s1.Id, ConsumoKWh = 120.0, RegistradoEm = DateTime.UtcNow };
+            var t2 = new Telemetria { SensorId = s2.Id, ConsumoKWh = 80.0, RegistradoEm = DateTime.UtcNow };
+            s1.Telemetrias.Add(t1);
+            s2.Telemetrias.Add(t2);
             await db.SaveChangesAsync();
 
             var service = new EnderecoService(db, new FakeViaCepClient(), null!);

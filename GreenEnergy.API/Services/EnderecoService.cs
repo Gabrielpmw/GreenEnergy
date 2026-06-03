@@ -55,7 +55,8 @@ namespace GreenEnergy.API.Services
             var clientUnits = await _context.UnidadesConsumidoras
                 .Where(u => u.UsuarioId == clienteId && u.CEP == cep && u.IsActive && !u.IsDeleted)
                 .Include(u => u.Dispositivos)
-                .ThenInclude(d => d.Telemetrias)
+                .ThenInclude(d => d.Sensor)
+                .ThenInclude(s => s.Telemetrias)
                 .ToListAsync();
 
             if (!clientUnits.Any())
@@ -73,7 +74,8 @@ namespace GreenEnergy.API.Services
                 var clientUnitsOfType = clientUnits.Where(u => u.TipoImovel == tipo).ToList();
                 double totalConsumoCliente = clientUnitsOfType
                     .SelectMany(u => u.Dispositivos)
-                    .SelectMany(d => d.Telemetrias)
+                    .Where(d => d.Sensor != null)
+                    .SelectMany(d => d.Sensor!.Telemetrias)
                     .Sum(t => t.ConsumoKWh);
 
                 double clientAvg = clientUnitsOfType.Count > 0 ? totalConsumoCliente / clientUnitsOfType.Count : 0;
@@ -82,12 +84,14 @@ namespace GreenEnergy.API.Services
                 var regionalUnits = await _context.UnidadesConsumidoras
                     .Where(u => u.CEP == cep && u.TipoImovel == tipo && u.IsActive && !u.IsDeleted)
                     .Include(u => u.Dispositivos)
-                    .ThenInclude(d => d.Telemetrias)
+                    .ThenInclude(d => d.Sensor)
+                    .ThenInclude(s => s.Telemetrias)
                     .ToListAsync();
 
                 double totalConsumoRegional = regionalUnits
                     .SelectMany(u => u.Dispositivos)
-                    .SelectMany(d => d.Telemetrias)
+                    .Where(d => d.Sensor != null)
+                    .SelectMany(d => d.Sensor!.Telemetrias)
                     .Sum(t => t.ConsumoKWh);
 
                 double regionalAvg = regionalUnits.Count > 0 ? totalConsumoRegional / regionalUnits.Count : 0;
@@ -141,7 +145,8 @@ namespace GreenEnergy.API.Services
             var clientUnits = await _context.UnidadesConsumidoras
                 .Where(u => u.UsuarioId == clienteId && u.Cidade.ToLower() == cidade.ToLower() && u.IsActive && !u.IsDeleted)
                 .Include(u => u.Dispositivos)
-                .ThenInclude(d => d.Telemetrias)
+                .ThenInclude(d => d.Sensor)
+                .ThenInclude(s => s.Telemetrias)
                 .ToListAsync();
 
             if (!clientUnits.Any())
@@ -157,7 +162,8 @@ namespace GreenEnergy.API.Services
                 var clientUnitsOfType = clientUnits.Where(u => u.TipoImovel == tipo).ToList();
                 double totalConsumoCliente = clientUnitsOfType
                     .SelectMany(u => u.Dispositivos)
-                    .SelectMany(d => d.Telemetrias)
+                    .Where(d => d.Sensor != null)
+                    .SelectMany(d => d.Sensor!.Telemetrias)
                     .Sum(t => t.ConsumoKWh);
 
                 double clientAvg = clientUnitsOfType.Count > 0 ? totalConsumoCliente / clientUnitsOfType.Count : 0;
@@ -166,12 +172,14 @@ namespace GreenEnergy.API.Services
                 var regionalUnits = await _context.UnidadesConsumidoras
                     .Where(u => u.Cidade.ToLower() == cidade.ToLower() && u.TipoImovel == tipo && u.IsActive && !u.IsDeleted)
                     .Include(u => u.Dispositivos)
-                    .ThenInclude(d => d.Telemetrias)
+                    .ThenInclude(d => d.Sensor)
+                    .ThenInclude(s => s.Telemetrias)
                     .ToListAsync();
 
                 double totalConsumoRegional = regionalUnits
                     .SelectMany(u => u.Dispositivos)
-                    .SelectMany(d => d.Telemetrias)
+                    .Where(d => d.Sensor != null)
+                    .SelectMany(d => d.Sensor!.Telemetrias)
                     .Sum(t => t.ConsumoKWh);
 
                 double regionalAvg = regionalUnits.Count > 0 ? totalConsumoRegional / regionalUnits.Count : 0;
