@@ -59,9 +59,12 @@ builder.Services.AddScoped<ITarifaService, TarifaService>();
 builder.Services.AddScoped<IConfiguracaoAPIService, ConfiguracaoAPIService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+builder.Services.AddScoped<IEnderecoService, EnderecoService>();
 
 // Registrar Integrações
 builder.Services.AddHttpClient<IViaCepClient, ViaCepClient>();
+builder.Services.AddHttpClient<IIbgeService, IbgeService>();
+builder.Services.AddHttpClient<IClimaService, ClimaService>();
 
 // 3. Configurar Swagger/OpenAPI (tlc-spec-driven)
 builder.Services.AddEndpointsApiExplorer();
