@@ -76,6 +76,45 @@ namespace GreenEnergy.API.Middleware
                                 });
                             }
                         }
+                        else if (auditAttribute.Entidade.Equals("UnidadeConsumidora", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            var unidadeRepository = httpContext.RequestServices.GetRequiredService<IUnidadeConsumidoraRepository>();
+                            var originalUnidade = await unidadeRepository.GetByIdAsync(entityId);
+                            if (originalUnidade != null)
+                            {
+                                dadosAnteriores = JsonSerializer.Serialize(new
+                                {
+                                    originalUnidade.Id,
+                                    originalUnidade.UsuarioId,
+                                    originalUnidade.TipoImovel,
+                                    originalUnidade.CEP,
+                                    originalUnidade.CodigoIBGE,
+                                    originalUnidade.Cidade,
+                                    originalUnidade.Estado,
+                                    originalUnidade.IsActive
+                                });
+                            }
+                        }
+                        else if (auditAttribute.Entidade.Equals("Dispositivo", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            var dispositivoRepository = httpContext.RequestServices.GetRequiredService<IDispositivoRepository>();
+                            var originalDispositivo = await dispositivoRepository.GetByIdAsync(entityId);
+                            if (originalDispositivo != null)
+                            {
+                                dadosAnteriores = JsonSerializer.Serialize(new
+                                {
+                                    originalDispositivo.Id,
+                                    originalDispositivo.UnidadeConsumidoraId,
+                                    originalDispositivo.CategoriaId,
+                                    originalDispositivo.Nome,
+                                    originalDispositivo.TipoAparelho,
+                                    originalDispositivo.Descricao,
+                                    originalDispositivo.PotenciaWatts,
+                                    originalDispositivo.Status,
+                                    originalDispositivo.IsActive
+                                });
+                            }
+                        }
                     }
                 }
             }

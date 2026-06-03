@@ -58,7 +58,7 @@ namespace GreenEnergy.API.Data
                 .HasOne(s => s.Dispositivo)
                 .WithOne(d => d.Sensor)
                 .HasForeignKey<Sensor>(s => s.DispositivoId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Relacionamentos 1:N Usuario [Cliente] <-> UnidadeConsumidora
             modelBuilder.Entity<UnidadeConsumidora>()

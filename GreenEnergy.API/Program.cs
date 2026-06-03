@@ -14,6 +14,7 @@ using GreenEnergy.API.Data;
 using GreenEnergy.API.Middleware;
 using GreenEnergy.API.Repositories;
 using GreenEnergy.API.Services;
+using GreenEnergy.API.Integrations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,11 +33,25 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Registrar Repositórios
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+builder.Services.AddScoped<IUnidadeConsumidoraRepository, UnidadeConsumidoraRepository>();
+builder.Services.AddScoped<IDispositivoRepository, DispositivoRepository>();
+builder.Services.AddScoped<IAnotacaoDispositivoRepository, AnotacaoDispositivoRepository>();
+builder.Services.AddScoped<ICategoriaAparelhoRepository, CategoriaAparelhoRepository>();
+builder.Services.AddScoped<IChamadoRepository, ChamadoRepository>();
+builder.Services.AddScoped<ISensorRepository, SensorRepository>();
 
 // Registrar Serviços
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<AuditLogFilter>();
+builder.Services.AddScoped<IUnidadeConsumidoraService, UnidadeConsumidoraService>();
+builder.Services.AddScoped<IDispositivoService, DispositivoService>();
+builder.Services.AddScoped<ISensorService, SensorService>();
+builder.Services.AddScoped<ICategoriaAparelhoService, CategoriaAparelhoService>();
+builder.Services.AddScoped<IChamadoService, ChamadoService>();
+
+// Registrar Integrações
+builder.Services.AddHttpClient<IViaCepClient, ViaCepClient>();
 
 // 3. Configurar Swagger/OpenAPI (tlc-spec-driven)
 builder.Services.AddEndpointsApiExplorer();

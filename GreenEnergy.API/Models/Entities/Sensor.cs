@@ -5,10 +5,10 @@ namespace GreenEnergy.API.Models.Entities
 {
     public class Sensor : BaseEntity
     {
-        public int DispositivoId { get; set; }
+        public int? DispositivoId { get; set; }
         public string ModeloSensor { get; set; } = string.Empty;
         public string NumeroSerie { get; set; } = string.Empty;
-        public SensorStatus Status { get; set; } = SensorStatus.Ativo;
+        public SensorStatus Status { get; set; } = SensorStatus.Disponivel;
         public DateTime? UltimoSinal { get; set; }
 
         // Propriedades de Navegação

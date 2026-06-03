@@ -23,8 +23,9 @@ namespace GreenEnergy.API.Models.Entities
 
     public enum SensorStatus
     {
-        Ativo,
-        Suspenso,
+        Disponivel,
+        EmUso,
+        Manutencao,
         Defeito
     }
 

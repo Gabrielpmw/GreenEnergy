@@ -515,17 +515,17 @@ GreenEnergy.sln
 ## 14. Roadmap de Construção — Etapas
 
 ### Fase 1 — Fundação do Backend
-- [ ] Criar solução `.sln` com projetos `API`, `Worker`, `Tests`
-- [ ] Configurar EF Core + SQL Server + connection string LocalDB
-- [ ] Criar todas as 18 entidades com campos `IsDeleted`/`IsActive`
-- [ ] Gerar migrations e seed inicial (Admin padrão, categorias, tarifas)
-- [ ] Configurar Swagger/Swashbuckle com XML comments + envelope `ApiResponse<T>`
-- [ ] Configurar JWT Auth + middleware de auditoria + CORS
+- [x] Criar solução `.sln` com projetos `API`, `Worker`, `Tests`
+- [x] Configurar EF Core + SQL Server + connection string LocalDB
+- [x] Criar todas as 18 entidades com campos `IsDeleted`/`IsActive`
+- [x] Gerar migrations e seed inicial (Admin padrão, categorias, tarifas)
+- [x] Configurar Swagger/Swashbuckle com XML comments + envelope `ApiResponse<T>`
+- [x] Configurar JWT Auth + middleware de auditoria + CORS
 
 ### Fase 2 — Módulo de Autenticação e Usuários
-- [ ] Endpoints `/auth` (register, login, refresh, logout)
-- [ ] Endpoints `/usuarios` com regras de role imutável e soft delete
-- [ ] Validação de role no token; proteção de rotas por `[Authorize(Roles)]`
+- [x] Endpoints `/auth` (register, login, refresh, logout)
+- [x] Endpoints `/usuarios` com regras de role imutável e soft delete
+- [x] Validação de role no token; proteção de rotas por `[Authorize(Roles)]`
 
 ### Fase 3 — Módulo de Unidade e Dispositivos
 - [ ] Endpoints `/unidades` com integração ViaCEP no cadastro
