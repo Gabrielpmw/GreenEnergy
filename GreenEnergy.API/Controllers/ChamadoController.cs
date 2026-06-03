@@ -131,5 +131,37 @@ namespace GreenEnergy.API.Controllers
 
             return Ok(result);
         }
+
+        /// <summary>
+        /// Provisiona um sensor físico para um chamado de Instalação, vinculando-o ao dispositivo correspondente. Apenas Operadores.
+        /// </summary>
+        [HttpPost("{id}/provisionar")]
+        [Authorize(Roles = "Operador")]
+        [ProducesResponseType(typeof(ApiResponse<ChamadoResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<ChamadoResponseDTO>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<ChamadoResponseDTO>), StatusCodes.Status404NotFound)]
+        [ServiceFilter(typeof(AuditLogFilter))]
+        [AuditLog("ProvisionarSensor", "Chamado")]
+        public async Task<IActionResult> Provisionar(int id, [FromBody] ProvisionarChamadoRequestDTO dto)
+        {
+            var loggedInUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(loggedInUserIdClaim) || !int.TryParse(loggedInUserIdClaim, out int loggedInUserId))
+            {
+                return Unauthorized();
+            }
+
+            var result = await _chamadoService.ProvisionarChamadoAsync(id, dto, loggedInUserId);
+            if (!result.Success)
+            {
+                if (result.Message?.Contains("não encontrado") == true)
+                {
+                    return NotFound(result);
+                }
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
     }
 }

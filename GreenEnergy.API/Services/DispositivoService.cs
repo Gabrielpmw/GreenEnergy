@@ -375,5 +375,50 @@ namespace GreenEnergy.API.Services
                 CriadoEm = a.CriadoEm
             };
         }
+
+        public async Task<ApiResponse<DispositivoResponseDTO>> LimitarAsync(int id)
+        {
+            var dispositivo = await _dispositivoRepository.GetByIdAsync(id);
+            if (dispositivo == null)
+            {
+                return new ApiResponse<DispositivoResponseDTO>("Dispositivo não encontrado.");
+            }
+
+            dispositivo.Status = DispositivoStatus.Suspenso;
+            await _dispositivoRepository.UpdateAsync(dispositivo);
+
+            var response = MapToResponse(dispositivo);
+            return new ApiResponse<DispositivoResponseDTO>(response, "Fornecimento de energia do dispositivo limitado com sucesso.");
+        }
+
+        public async Task<ApiResponse<DispositivoResponseDTO>> CortarAsync(int id)
+        {
+            var dispositivo = await _dispositivoRepository.GetByIdAsync(id);
+            if (dispositivo == null)
+            {
+                return new ApiResponse<DispositivoResponseDTO>("Dispositivo não encontrado.");
+            }
+
+            dispositivo.Status = DispositivoStatus.Suspenso;
+            await _dispositivoRepository.UpdateAsync(dispositivo);
+
+            var response = MapToResponse(dispositivo);
+            return new ApiResponse<DispositivoResponseDTO>(response, "Fornecimento de energia do dispositivo cortado com sucesso.");
+        }
+
+        public async Task<ApiResponse<DispositivoResponseDTO>> RestaurarAsync(int id)
+        {
+            var dispositivo = await _dispositivoRepository.GetByIdAsync(id);
+            if (dispositivo == null)
+            {
+                return new ApiResponse<DispositivoResponseDTO>("Dispositivo não encontrado.");
+            }
+
+            dispositivo.Status = DispositivoStatus.Ativo;
+            await _dispositivoRepository.UpdateAsync(dispositivo);
+
+            var response = MapToResponse(dispositivo);
+            return new ApiResponse<DispositivoResponseDTO>(response, "Fornecimento de energia do dispositivo restaurado com sucesso.");
+        }
     }
 }

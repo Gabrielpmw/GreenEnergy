@@ -83,7 +83,14 @@ namespace GreenEnergy.Worker.Workers
                     // Define a tensão base dependendo do ID do sensor para variar a rede (127V ou 220V)
                     double tensaoBase = (sensor.Id % 2 == 0) ? 127.0 : 220.0;
 
-                    if (gerarAnomalia)
+                    if (dispositivo.Status == DispositivoStatus.Suspenso || dispositivo.Status == DispositivoStatus.Defeito)
+                    {
+                        // Se o dispositivo estiver suspenso ou com defeito, o consumo simulado é nulo
+                        wattsSimulado = 0.0;
+                        volts = 0.0;
+                        _logger.LogInformation("Dispositivo '{Nome}' suspenso ou com defeito. Consumo simulado zerado.", dispositivo.Nome);
+                    }
+                    else if (gerarAnomalia)
                     {
                         // 3x o consumo nominal do dispositivo
                         wattsSimulado = dispositivo.PotenciaWatts * 3.0;
@@ -106,7 +113,7 @@ namespace GreenEnergy.Worker.Workers
                     }
 
                     // Corrente = Potência (W) / Tensão (V)
-                    double corrente = Math.Round(wattsSimulado / volts, 2);
+                    double corrente = volts > 0.0 ? Math.Round(wattsSimulado / volts, 2) : 0.0;
 
                     // Consumo em kWh gerado no intervalo de 45 segundos:
                     // (Watts * tempo_horas) / 1000 => (Watts * (45 / 3600)) / 1000

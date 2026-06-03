@@ -39,6 +39,8 @@ builder.Services.AddScoped<IAnotacaoDispositivoRepository, AnotacaoDispositivoRe
 builder.Services.AddScoped<ICategoriaAparelhoRepository, CategoriaAparelhoRepository>();
 builder.Services.AddScoped<IChamadoRepository, ChamadoRepository>();
 builder.Services.AddScoped<ISensorRepository, SensorRepository>();
+builder.Services.AddScoped<IMetaRepository, MetaRepository>();
+builder.Services.AddScoped<IRelatorioTecnicoRepository, RelatorioTecnicoRepository>();
 
 // Registrar Serviços
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -49,6 +51,8 @@ builder.Services.AddScoped<IDispositivoService, DispositivoService>();
 builder.Services.AddScoped<ISensorService, SensorService>();
 builder.Services.AddScoped<ICategoriaAparelhoService, CategoriaAparelhoService>();
 builder.Services.AddScoped<IChamadoService, ChamadoService>();
+builder.Services.AddScoped<IMetaService, MetaService>();
+builder.Services.AddScoped<IRelatorioTecnicoService, RelatorioTecnicoService>();
 
 // Registrar Integrações
 builder.Services.AddHttpClient<IViaCepClient, ViaCepClient>();

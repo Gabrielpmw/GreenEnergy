@@ -136,6 +136,56 @@ namespace GreenEnergy.API.Services
             return new ApiResponse<ChamadoResponseDTO>(responseDto, "Status do chamado atualizado com sucesso.");
         }
 
+        public async Task<ApiResponse<ChamadoResponseDTO>> ProvisionarChamadoAsync(int chamadoId, ProvisionarChamadoRequestDTO dto, int requestUserId)
+        {
+            var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
+            if (chamado == null)
+            {
+                return new ApiResponse<ChamadoResponseDTO>("Chamado não encontrado.");
+            }
+
+            if (chamado.Tipo != TipoChamado.Instalacao)
+            {
+                return new ApiResponse<ChamadoResponseDTO>("Provisionamento é permitido apenas para chamados de Instalação.");
+            }
+
+            if (chamado.Status == ChamadoStatus.Validado)
+            {
+                return new ApiResponse<ChamadoResponseDTO>("Este chamado já foi concluído e validado.");
+            }
+
+            var sensor = await _sensorRepository.GetByIdAsync(dto.SensorId);
+            if (sensor == null)
+            {
+                return new ApiResponse<ChamadoResponseDTO>("Sensor não encontrado.");
+            }
+
+            if (sensor.DispositivoId.HasValue && sensor.DispositivoId != chamado.DispositivoId)
+            {
+                return new ApiResponse<ChamadoResponseDTO>("Este sensor já está vinculado a outro dispositivo.");
+            }
+
+            if (sensor.Status != SensorStatus.Disponivel && sensor.DispositivoId != chamado.DispositivoId)
+            {
+                return new ApiResponse<ChamadoResponseDTO>("Apenas sensores com status 'Disponivel' podem ser vinculados.");
+            }
+
+            // Vincular sensor ao dispositivo do chamado
+            sensor.DispositivoId = chamado.DispositivoId;
+            sensor.Status = SensorStatus.EmUso;
+            await _sensorRepository.UpdateAsync(sensor);
+
+            // Finalizar o chamado
+            chamado.Status = ChamadoStatus.Validado;
+            chamado.OperadorId = requestUserId;
+            await _chamadoRepository.UpdateAsync(chamado);
+
+            var chamadoCarregado = await _chamadoRepository.GetByIdAsync(chamadoId);
+            var responseDto = MapToResponse(chamadoCarregado!);
+
+            return new ApiResponse<ChamadoResponseDTO>(responseDto, "Chamado provisionado e finalizado com sucesso!");
+        }
+
         private ChamadoResponseDTO MapToResponse(Chamado c)
         {
             return new ChamadoResponseDTO

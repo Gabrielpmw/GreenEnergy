@@ -20,5 +20,10 @@ namespace GreenEnergy.API.Services
         Task<ApiResponse<IEnumerable<AnotacaoDispositivoResponseDTO>>> ListAnotacoesAsync(int dispositivoId, int requestUserId, string requestUserRole);
         Task<ApiResponse<AnotacaoDispositivoResponseDTO>> UpdateAnotacaoAsync(int anotacaoId, UpdateAnotacaoDispositivoRequestDTO dto, int requestUserId);
         Task<ApiResponse<bool>> DesativarAnotacaoAsync(int anotacaoId, int requestUserId);
+
+        // Controle Remoto
+        Task<ApiResponse<DispositivoResponseDTO>> LimitarAsync(int id);
+        Task<ApiResponse<DispositivoResponseDTO>> CortarAsync(int id);
+        Task<ApiResponse<DispositivoResponseDTO>> RestaurarAsync(int id);
     }
 }

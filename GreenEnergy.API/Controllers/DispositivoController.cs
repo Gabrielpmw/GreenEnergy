@@ -347,5 +347,77 @@ namespace GreenEnergy.API.Controllers
 
             return Ok(result);
         }
+
+        /// <summary>
+        /// Limita o fornecimento de energia para um dispositivo. Apenas Administradores ou Operadores.
+        /// </summary>
+        [HttpPost("{id}/limitar")]
+        [Authorize(Roles = "Admin,Operador")]
+        [ProducesResponseType(typeof(ApiResponse<DispositivoResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<DispositivoResponseDTO>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<DispositivoResponseDTO>), StatusCodes.Status404NotFound)]
+        [ServiceFilter(typeof(AuditLogFilter))]
+        [AuditLog("LimitarConsumo", "Dispositivo")]
+        public async Task<IActionResult> Limitar(int id)
+        {
+            var result = await _dispositivoService.LimitarAsync(id);
+            if (!result.Success)
+            {
+                if (result.Message?.Contains("não encontrado") == true)
+                {
+                    return NotFound(result);
+                }
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Corta o fornecimento de energia para um dispositivo. Apenas Administradores ou Operadores.
+        /// </summary>
+        [HttpPost("{id}/cortar")]
+        [Authorize(Roles = "Admin,Operador")]
+        [ProducesResponseType(typeof(ApiResponse<DispositivoResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<DispositivoResponseDTO>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<DispositivoResponseDTO>), StatusCodes.Status404NotFound)]
+        [ServiceFilter(typeof(AuditLogFilter))]
+        [AuditLog("CortarEnergia", "Dispositivo")]
+        public async Task<IActionResult> Cortar(int id)
+        {
+            var result = await _dispositivoService.CortarAsync(id);
+            if (!result.Success)
+            {
+                if (result.Message?.Contains("não encontrado") == true)
+                {
+                    return NotFound(result);
+                }
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Restaura o fornecimento de energia para um dispositivo. Apenas Administradores ou Operadores.
+        /// </summary>
+        [HttpPost("{id}/restaurar")]
+        [Authorize(Roles = "Admin,Operador")]
+        [ProducesResponseType(typeof(ApiResponse<DispositivoResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<DispositivoResponseDTO>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<DispositivoResponseDTO>), StatusCodes.Status404NotFound)]
+        [ServiceFilter(typeof(AuditLogFilter))]
+        [AuditLog("RestaurarEnergia", "Dispositivo")]
+        public async Task<IActionResult> Restaurar(int id)
+        {
+            var result = await _dispositivoService.RestaurarAsync(id);
+            if (!result.Success)
+            {
+                if (result.Message?.Contains("não encontrado") == true)
+                {
+                    return NotFound(result);
+                }
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
     }
 }

@@ -10,5 +10,6 @@ namespace GreenEnergy.API.Services
         Task<ApiResponse<ChamadoResponseDTO>> GetByIdAsync(int id, int requestUserId, string requestUserRole);
         Task<ApiResponse<IEnumerable<ChamadoResponseDTO>>> ListAllAsync(int requestUserId, string requestUserRole);
         Task<ApiResponse<ChamadoResponseDTO>> UpdateStatusAsync(int id, UpdateChamadoStatusRequestDTO dto, int requestUserId, string requestUserRole);
+        Task<ApiResponse<ChamadoResponseDTO>> ProvisionarChamadoAsync(int chamadoId, ProvisionarChamadoRequestDTO dto, int requestUserId);
     }
 }
