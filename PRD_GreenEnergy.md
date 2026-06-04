@@ -555,17 +555,81 @@ GreenEnergy.sln
 - [ ] Endpoints `/enderecos/comparativo/cep` e `/cidade`
 - [ ] Lógica de comparativo por tipo de imóvel × região
 
-### Fase 8 — Frontend React + Vite
-- [ ] Scaffold Vite + TypeScript + React Router + Axios
-- [ ] Design system (paleta, tipografia, componentes base)
-- [ ] Páginas: Login, Register, Dashboard Cliente, Dashboard Operador, Cockpit Admin
-- [ ] Integração Recharts (LineChart, AreaChart, BarChart, PieChart, RadarChart)
-- [ ] Fluxo completo de chamados, metas e anotações no frontend
+### Fase 8 — Frontend: Fundação e Infraestrutura
+> Referência completa: `FRONTEND_CONTEXT.md`
 
-### Fase 9 — Testes e Documentação
-- [ ] Testes de contrato para todos os endpoints (xUnit + WebApplicationFactory)
-- [ ] Revisão final do Swagger (exemplos, descrições, tags)
-- [ ] Validação dos critérios de aceite da Seção 12
+- [ ] **8.1** Scaffold do projeto: `npm create vite@latest greenenergy-frontend -- --template react-ts`
+- [ ] **8.2** Instalar dependências: `react-router-dom`, `axios`, `recharts`, `zustand` (ou Context API), `lucide-react` (ícones)
+- [ ] **8.3** Configurar proxy de desenvolvimento no `vite.config.ts` apontando para `http://localhost:5288`
+- [ ] **8.4** Criar `axiosInstance.ts` com interceptor 401 → redireciona para `/login` e limpa estado
+- [ ] **8.5** Criar Design System em `src/styles/tokens.css` com todas as variáveis de cor (verde, suporte, gray)
+- [ ] **8.6** Importar fonte `Inter` do Google Fonts no `index.html`
+- [ ] **8.7** Implementar componentes globais: `Spinner`, `SkeletonRow`, `SkeletonCard`, `EmptyState`, `StatusBadge`, `ConfirmModal`, `Toast`, `ErrorBoundary`, `ErrorCard`
+- [ ] **8.8** Implementar `PrivateRoute` com verificação de token JWT e role via estado global
+- [ ] **8.9** Criar layout base com `Sidebar` + `Header` + `ContentArea` — sidebar muda completamente por role
+- [ ] **8.10** Configurar `React Router` com todas as rotas públicas, de cliente, operador e admin
+
+### Fase 9 — Frontend: Telas Públicas e Autenticação
+
+- [ ] **9.1** Tela `/login` — formulário email/senha, Spinner no botão, redirecionamento por role após login
+- [ ] **9.2** Tela `/cadastro` — formulário de auto-cadastro de cliente, validação inline, feedback de erro
+- [ ] **9.3** Armazenar `token`, `refreshToken`, `userId`, `role` e `nome` no estado global após login
+- [ ] **9.4** Implementar fluxo de `refresh token` automático ao receber 401 (antes de redirecionar)
+- [ ] **9.5** Botão de Logout no Header → `POST /auth/logout` → limpar estado → redirecionar para `/login`
+
+### Fase 10 — Frontend: Telas do Cliente (Parte 1 — Dados Básicos)
+
+- [ ] **10.1** `/cliente/dashboard` — Cards de resumo: total de dispositivos, tarifa vigente, clima local. Skeleton no carregamento. Empty state se sem dispositivos (ilustração + CTA "Adicionar Dispositivo")
+- [ ] **10.2** `/cliente/perfil` — Ver e editar nome, email, telefone. Modal de confirmação para troca de senha
+- [ ] **10.3** `/cliente/unidades` — Lista de unidades com tipo de imóvel, CEP, cidade. Botão "Nova Unidade". Empty state amigável
+- [ ] **10.4** `/cliente/unidades/nova` — Formulário: CEP com autopreenchimento via `GET /unidades/cep/{cep}`, tipo de imóvel. Feedback de erro se CEP inválido ou ViaCEP offline
+- [ ] **10.5** `/cliente/unidades/:id` — Exibe endereço completo + lista de dispositivos da unidade selecionada
+
+### Fase 11 — Frontend: Telas do Cliente (Parte 2 — Dispositivos e Consumo)
+
+- [ ] **11.1** `/cliente/dispositivos` — Tabela com nome, tipo, potência, status (badge colorido). Skeleton durante carregamento
+- [ ] **11.2** `/cliente/dispositivos/novo` — Seleciona unidade, categoria, informa nome e potência em watts
+- [ ] **11.3** `/cliente/dispositivos/:id` — Detalhe: gráfico de consumo (AreaChart Recharts) dentro de `ErrorBoundary`. Lista de anotações. Meta proposta (se houver)
+- [ ] **11.4** Anotações: adicionar, editar e excluir anotações inline no detalhe do dispositivo
+- [ ] **11.5** `/cliente/tarifas` — Card em destaque com tarifa vigente (bandeira colorida). Histórico em tabela colapsável
+
+### Fase 12 — Frontend: Telas do Cliente (Parte 3 — Chamados, Metas e Comparativos)
+
+- [ ] **12.1** `/cliente/chamados` — Lista com status colorido (Pendente=amber, EmAtendimento=blue, Finalizado=green). Botão "Novo Chamado"
+- [ ] **12.2** `/cliente/chamados/novo` — Seleciona tipo (Instalação/Remoção), dispositivo, escreve descrição
+- [ ] **12.3** `/cliente/metas` — Lista de metas por dispositivo com status (Proposta/Aprovada/Devolvida). Badge de status
+- [ ] **12.4** `/cliente/metas/nova` — Seleciona dispositivo, tipo de meta (kWh ou R$), valor limite, justificativa
+- [ ] **12.5** `/cliente/comparativos` — BarChart comparando consumo do cliente vs. média regional (por CEP ou cidade). Painel de clima ao lado com dados de temperatura e umidade. Error Boundary em ambos os gráficos
+
+### Fase 13 — Frontend: Telas do Operador
+
+- [ ] **13.1** `/operador/dashboard` — Cards: chamados pendentes, sensores disponíveis no estoque, metas aguardando avaliação
+- [ ] **13.2** `/operador/chamados` — Tabela com filtros por status e tipo. Ação contextual por linha
+- [ ] **13.3** `/operador/chamados/:id` — Fluxo de status com botões de transição. Se tipo=Instalação: dropdown de sensores disponíveis para provisionar. ConfirmModal antes de provisionar
+- [ ] **13.4** `/operador/dispositivos` — Todos os dispositivos do sistema. Ações: Limitar / Cortar (com ConfirmModal) / Restaurar energia
+- [ ] **13.5** `/operador/dispositivos/:id` — Painel de controle: botões de ação de energia, vincular/desvincular sensor, ver histórico de telemetria (LineChart)
+- [ ] **13.6** `/operador/sensores` — Estoque de sensores com status. Botão "Cadastrar Sensor"
+- [ ] **13.7** `/operador/metas` — Metas com status "Proposta". Formulário inline: Aprovar ou Devolver com campo de observação
+- [ ] **13.8** `/operador/relatorios` — Listagem e criação de relatório técnico vinculado a um chamado
+- [ ] **13.9** `/operador/categorias` — CRUD inline: criar, editar e excluir categorias de aparelhos
+- [ ] **13.10** `/operador/clientes` — Busca de cliente para visualizar suas unidades consumidoras
+
+### Fase 14 — Frontend: Telas do Administrador
+
+- [ ] **14.1** `/admin/dashboard` — Cockpit: KPIs em cards grandes (volume kWh, sensores ativos/inativos, status APIs externas com ícone verde/vermelho, saúde do Worker Service, chamados pendentes). Todos com Skeleton
+- [ ] **14.2** `/admin/usuarios` — Tabs: Todos / Clientes / Operadores. Ações: Ativar / Desativar (ConfirmModal). Badge de status na linha
+- [ ] **14.3** `/admin/usuarios/operadores/novo` — Formulário completo: nome, email, senha, documento, telefone
+- [ ] **14.4** `/admin/tarifas` — Card da tarifa ativa em destaque. Tabela do histórico. Formulário de nova bandeira tarifária com valor (R$/kWh) e início de vigência
+- [ ] **14.5** `/admin/configuracoes/apis` — Cards por API (OpenWeather, IBGE, ViaCEP) com status e campo para editar a chave de acesso
+- [ ] **14.6** `/admin/auditoria` — Tabela filtrada por role, período (date range picker), ação e entidade. Exportação opcional como CSV
+
+### Fase 15 — Testes e Documentação Final
+
+- [ ] **15.1** Testes de contrato para todos os endpoints backend (xUnit + WebApplicationFactory)
+- [ ] **15.2** Revisão final do Swagger (exemplos, descrições, tags por controller)
+- [ ] **15.3** Validação dos critérios de aceite da Seção 12
+- [ ] **15.4** Testes de navegação por role: confirmar que nenhuma rota de outra role é acessível
+- [ ] **15.5** Testar todos os empty states, error boundaries e estados de loading
 
 ---
 
