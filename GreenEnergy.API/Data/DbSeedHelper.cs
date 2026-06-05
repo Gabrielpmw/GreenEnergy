@@ -44,14 +44,14 @@ namespace GreenEnergy.API.Data
 
             var random = new Random();
 
-            // 5 CEPs reais com endereços estruturados para agrupamento de 5 em 5 usuários
+            // 5 CEPs reais com endereços do Tocantins (TO) para agrupamento de 5 em 5 usuários
             var ceps = new[] 
             {
-                new { CEP = "13480001", Cidade = "Limeira", UF = "SP", Logradouro = "Rua Santa Cruz", Bairro = "Centro", CodigoIBGE = "3526902" },
-                new { CEP = "13480002", Cidade = "Limeira", UF = "SP", Logradouro = "Avenida Rio Claro", Bairro = "Vila Queiroz", CodigoIBGE = "3526902" },
-                new { CEP = "01001000", Cidade = "São Paulo", UF = "SP", Logradouro = "Praça da Sé", Bairro = "Sé", CodigoIBGE = "3550308" },
-                new { CEP = "13010000", Cidade = "Campinas", UF = "SP", Logradouro = "Rua General Osório", Bairro = "Centro", CodigoIBGE = "3509502" },
-                new { CEP = "20040002", Cidade = "Rio de Janeiro", UF = "RJ", Logradouro = "Avenida Nilo Peçanha", Bairro = "Centro", CodigoIBGE = "3304557" }
+                new { CEP = "77015002", Cidade = "Palmas", UF = "TO", Logradouro = "Avenida LO-01", Bairro = "Plano Diretor Norte", CodigoIBGE = "1721000" },
+                new { CEP = "77818010", Cidade = "Araguaína", UF = "TO", Logradouro = "Rua Sete de Setembro", Bairro = "Setor Central", CodigoIBGE = "1702109" },
+                new { CEP = "77700000", Cidade = "Guaraí", UF = "TO", Logradouro = "Avenida Bernardo Sayão", Bairro = "Setor Alvorada", CodigoIBGE = "1709302" },
+                new { CEP = "77600000", Cidade = "Paraíso do Tocantins", UF = "TO", Logradouro = "Rua Bernardino Maciel", Bairro = "Setor Central", CodigoIBGE = "1716109" },
+                new { CEP = "77020012", Cidade = "Palmas", UF = "TO", Logradouro = "Avenida NS-02", Bairro = "Plano Diretor Sul", CodigoIBGE = "1721000" }
             };
 
             // Hashes de senha padrão
