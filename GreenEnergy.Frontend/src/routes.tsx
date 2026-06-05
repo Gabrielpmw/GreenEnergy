@@ -4,12 +4,11 @@ import { PrivateRoute } from './components/PrivateRoute'
 import { Login } from './pages/auth/Login'
 import { Register } from './pages/auth/Register'
 
-// Stubs de Páginas do Cliente
-const ClienteDashboard = () => <div><h3>Dashboard do Cliente</h3><p>Consumos, metas e previsão climática local.</p></div>
-const ClientePerfil = () => <div><h3>Meu Perfil</h3><p>Alteração cadastral e troca de senha.</p></div>
-const ClienteUnidades = () => <div><h3>Minhas Unidades</h3><p>Unidades consumidoras cadastradas.</p></div>
-const ClienteUnidadesNova = () => <div><h3>Cadastrar Unidade</h3><p>Nova unidade consumidora (CEP com ViaCEP).</p></div>
-const ClienteUnidadeDetalhe = () => <div><h3>Detalhe da Unidade</h3><p>Endereço e lista de dispositivos integrados.</p></div>
+import { Dashboard as ClienteDashboard } from './pages/cliente/Dashboard'
+import { Perfil as ClientePerfil } from './pages/cliente/Perfil'
+import { Unidades as ClienteUnidades } from './pages/cliente/Unidades'
+import { UnidadesNova as ClienteUnidadesNova } from './pages/cliente/UnidadesNova'
+import { UnidadeDetalhe as ClienteUnidadeDetalhe } from './pages/cliente/UnidadeDetalhe'
 const ClienteDispositivos = () => <div><h3>Meus Dispositivos</h3><p>Gerenciamento de aparelhos cadastrados.</p></div>
 const ClienteDispositivoNovo = () => <div><h3>Cadastrar Dispositivo</h3><p>Vincular novo aparelho a uma unidade.</p></div>
 const ClienteDispositivoDetalhe = () => <div><h3>Detalhe do Dispositivo</h3><p>Consumo detalhado, anotações e metas.</p></div>
