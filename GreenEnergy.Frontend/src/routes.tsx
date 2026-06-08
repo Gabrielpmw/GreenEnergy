@@ -20,18 +20,19 @@ import { Metas as ClienteMetas } from './pages/cliente/Metas'
 import { MetaNova as ClienteMetaNova } from './pages/cliente/MetaNova'
 import { Comparativos as ClienteComparativos } from './pages/cliente/Comparativos'
 
-// Stubs de Páginas do Operador
-const OperadorDashboard = () => <div><h3>Painel de Operações</h3><p>Gerenciamento de chamados técnicos e estoque de sensores.</p></div>
-const OperadorChamados = () => <div><h3>Fila de Chamados</h3><p>Triagem de instalações, remoções e perícias.</p></div>
-const OperadorChamadoDetalhe = () => <div><h3>Detalhe do Chamado</h3><p>Associação de sensor e provisionamento técnico.</p></div>
-const OperadorDispositivos = () => <div><h3>Todos os Dispositivos</h3><p>Lista do ecossistema de aparelhos cadastrados.</p></div>
-const OperadorDispositivoDetalhe = () => <div><h3>Controle do Dispositivo</h3><p>Limitação, corte e religamento de energia do ativo.</p></div>
-const OperadorSensores = () => <div><h3>Estoque de Sensores</h3><p>Sensores disponíveis e vinculados.</p></div>
-const OperadorSensorNovo = () => <div><h3>Cadastrar Sensor</h3><p>Entrada de novo hardware no estoque.</p></div>
-const OperadorMetas = () => <div><h3>Avaliar Metas</h3><p>Aprovação de limites sugeridos por clientes.</p></div>
-const OperadorRelatorios = () => <div><h3>Relatórios Técnicos</h3><p>Ocorrências e laudos de chamados concluídos.</p></div>
-const OperadorCategorias = () => <div><h3>Categorias de Aparelhos</h3><p>Gerenciador de tipos de dispositivos no sistema.</p></div>
-const OperadorClientes = () => <div><h3>Consultar Clientes</h3><p>Listagem de clientes para análise técnica.</p></div>
+import { Dashboard as OperadorDashboard } from './pages/operador/Dashboard'
+import { Chamados as OperadorChamados } from './pages/operador/Chamados'
+import { ChamadoDetalhe as OperadorChamadoDetalhe } from './pages/operador/ChamadoDetalhe'
+import { Dispositivos as OperadorDispositivos } from './pages/operador/Dispositivos'
+import { DispositivoDetalhe as OperadorDispositivoDetalhe } from './pages/operador/DispositivoDetalhe'
+import { Sensores as OperadorSensores } from './pages/operador/Sensores'
+import { SensorNovo as OperadorSensorNovo } from './pages/operador/SensorNovo'
+import { Metas as OperadorMetas } from './pages/operador/Metas'
+
+import { Relatorios as OperadorRelatorios } from './pages/operador/Relatorios'
+import { Categorias as OperadorCategorias } from './pages/operador/Categorias'
+import { Clientes as OperadorClientes } from './pages/operador/Clientes'
+
 
 // Stubs de Páginas do Administrador
 const AdminDashboard = () => <div><h3>Cockpit do Ecossistema</h3><p>Logs, saúde da telemetria e das APIs integradas.</p></div>
