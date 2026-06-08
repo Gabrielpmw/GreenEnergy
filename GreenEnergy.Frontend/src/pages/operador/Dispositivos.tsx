@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Cpu, RefreshCw, AlertTriangle, Eye, Power, Slash } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Cpu, RefreshCw, AlertTriangle, Eye, Power, Search, X } from 'lucide-react'
 import { Spinner } from '../../components/ui/Spinner'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { StatusBadge } from '../../components/ui/StatusBadge'
@@ -35,26 +35,54 @@ interface Chamado {
   status: string
 }
 
+interface Cliente {
+  id: number
+  nome: string
+  documento?: string
+  telefone?: string
+}
+
+interface Unidade {
+  id: number
+  usuarioId: number
+  nome?: string
+  logradouro: string
+  numero: string
+  complemento?: string
+  bairro: string
+  localidade: string
+  uf: string
+}
+
 export const Dispositivos: React.FC = () => {
   const navigate = useNavigate()
   const { addToast } = useToast()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const unidadeIdParam = searchParams.get('unidadeId')
 
   const [devices, setDevices] = useState<Device[]>([])
   const [chamados, setChamados] = useState<Chamado[]>([])
+  const [clients, setClients] = useState<Cliente[]>([])
+  const [units, setUnits] = useState<Unidade[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  // Filtros
+  const [cpfFilter, setCpfFilter] = useState('')
 
   // Controle de Modal de Ação
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null)
-  const [actionType, setActionType] = useState<'limitar' | 'cortar' | 'restaurar' | null>(null)
+  const [actionType, setActionType] = useState<'cortar' | 'restaurar' | null>(null)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
 
   const fetchData = async () => {
     try {
       setIsLoading(true)
       // Buscas paralelas tolerantes a falhas
-      const [devicesRes, chamadosRes] = await Promise.allSettled([
+      const [devicesRes, chamadosRes, clientsRes, unitsRes] = await Promise.allSettled([
         api.get('/dispositivos'),
-        api.get('/chamados')
+        api.get('/chamados'),
+        api.get('/usuarios/clientes'),
+        api.get('/unidades')
       ])
 
       let devicesList: Device[] = []
@@ -69,8 +97,20 @@ export const Dispositivos: React.FC = () => {
         chamadosList = chamadosRes.value.data.data || []
       }
 
+      let clientsList: Cliente[] = []
+      if (clientsRes.status === 'fulfilled' && clientsRes.value.data.success) {
+        clientsList = clientsRes.value.data.data || []
+      }
+
+      let unitsList: Unidade[] = []
+      if (unitsRes.status === 'fulfilled' && unitsRes.value.data.success) {
+        unitsList = unitsRes.value.data.data || []
+      }
+
       setDevices(devicesList)
       setChamados(chamadosList)
+      setClients(clientsList)
+      setUnits(unitsList)
     } catch (err) {
       console.error('Erro ao consolidar dados de dispositivos:', err)
       addToast('Ocorreu um erro ao carregar os dados.', 'error')
@@ -87,11 +127,11 @@ export const Dispositivos: React.FC = () => {
     return chamados.some((c) => 
       c.dispositivoId === deviceId &&
       c.tipo.toLowerCase() === 'remocao' &&
-      (c.status.toLowerCase() === 'pendente' || c.status.toLowerCase() === 'emanalise' || c.status.toLowerCase() === 'ematendimento')
+      (c.status.toLowerCase() === 'pendente' || c.status.toLowerCase() === 'emanalise')
     )
   }
 
-  const handleActionClick = (device: Device, type: 'limitar' | 'cortar' | 'restaurar') => {
+  const handleActionClick = (device: Device, type: 'cortar' | 'restaurar') => {
     setSelectedDevice(device)
     setActionType(type)
     setIsConfirmOpen(true)
@@ -122,6 +162,43 @@ export const Dispositivos: React.FC = () => {
     }
   }
 
+  // Filtragem no frontend
+  const filteredDevices = devices.filter((d) => {
+    // 1. Filtro por unidadeIdParam (redirecionado do HUD de clientes)
+    if (unidadeIdParam && d.unidadeConsumidoraId !== parseInt(unidadeIdParam, 10)) {
+      return false
+    }
+
+    // 2. Filtro por CPF do cliente
+    if (cpfFilter.trim() !== '') {
+      const cleanedFilter = cpfFilter.replace(/\D/g, '')
+      const unit = units.find((u) => u.id === d.unidadeConsumidoraId)
+      if (!unit) return false
+
+      const client = clients.find((c) => c.id === unit.usuarioId)
+      if (!client) return false
+
+      const clientCpf = (client.documento || '').replace(/\D/g, '')
+      if (!clientCpf.includes(cleanedFilter)) {
+        return false
+      }
+    }
+
+    return true
+  })
+
+  const getUnitAddressLabel = (unidadeId: number) => {
+    const unit = units.find((u) => u.id === unidadeId)
+    if (!unit) return `Unidade #${unidadeId}`
+    const client = clients.find((c) => c.id === unit.usuarioId)
+    const clientName = client ? client.nome : 'Cliente Desconhecido'
+    const address = `${unit.logradouro}, ${unit.numero} (${unit.localidade}/${unit.uf})`
+    return {
+      address,
+      clientName
+    }
+  }
+
   if (isLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
@@ -148,10 +225,100 @@ export const Dispositivos: React.FC = () => {
         </button>
       </div>
 
-      {devices.length === 0 ? (
+      {/* Barra de Filtros */}
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '16px',
+        alignItems: 'center',
+        marginBottom: '20px',
+        padding: '16px',
+        backgroundColor: 'var(--white-card)',
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--white-muted)'
+      }}>
+        {/* Filtro por CPF */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '280px', flex: 1 }}>
+          <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--gray-900)' }}>
+            Filtrar por CPF do Cliente
+          </label>
+          <div style={{ position: 'relative' }}>
+            <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Digite o CPF do cliente..."
+              value={cpfFilter}
+              onChange={(e) => setCpfFilter(e.target.value)}
+              style={{
+                padding: '8px 10px 8px 32px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--white-dim)',
+                backgroundColor: 'var(--white-pure)',
+                fontSize: '13px',
+                width: '100%',
+                boxSizing: 'border-box'
+              }}
+            />
+            {cpfFilter && (
+              <button
+                onClick={() => setCpfFilter('')}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--gray-500)',
+                  cursor: 'pointer',
+                  padding: 0
+                }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Badge do Filtro de Unidade Ativo */}
+        {unidadeIdParam && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            backgroundColor: 'var(--green-50)',
+            border: '1px solid var(--green-200)',
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-md)',
+            fontSize: '13px',
+            color: 'var(--green-700)',
+            marginTop: '18px'
+          }}>
+            <span>Mostrando apenas dispositivos da <strong>Unidade #{unidadeIdParam}</strong></span>
+            <button
+              onClick={() => setSearchParams({})}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--green-700)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '2px'
+              }}
+              title="Limpar filtro de unidade"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {filteredDevices.length === 0 ? (
         <EmptyState
           title="Nenhum dispositivo encontrado"
-          description="Não há dispositivos inteligentes integrados ao ecossistema no momento."
+          description="Nenhum dispositivo atende aos critérios dos filtros selecionados."
           icon={<Cpu size={48} color="var(--green-700)" />}
         />
       ) : (
@@ -165,15 +332,17 @@ export const Dispositivos: React.FC = () => {
             <thead>
               <tr style={{ backgroundColor: 'var(--white-soft)', borderBottom: '1px solid var(--white-muted)', color: 'var(--gray-500)', fontWeight: '600' }}>
                 <th style={{ padding: '16px' }}>Nome/Categoria</th>
-                <th style={{ padding: '16px' }}>Unidade</th>
+                <th style={{ padding: '16px' }}>Unidade Consumidora / Proprietário</th>
                 <th style={{ padding: '16px' }}>Hardware (Sensor)</th>
                 <th style={{ padding: '16px' }}>Status</th>
                 <th style={{ padding: '16px', textAlign: 'right' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {devices.map((d) => {
+              {filteredDevices.map((d) => {
                 const pendingRemoval = hasPendingRemoval(d.id)
+                const unitInfo = getUnitAddressLabel(d.unidadeConsumidoraId)
+                
                 return (
                   <tr 
                     key={d.id} 
@@ -192,8 +361,19 @@ export const Dispositivos: React.FC = () => {
                     </td>
 
                     {/* Unidade */}
-                    <td style={{ padding: '16px', color: 'var(--gray-900)' }}>
-                      Unidade #{d.unidadeConsumidoraId}
+                    <td style={{ padding: '16px' }}>
+                      {typeof unitInfo === 'string' ? (
+                        <span style={{ color: 'var(--gray-900)' }}>{unitInfo}</span>
+                      ) : (
+                        <div>
+                          <span style={{ fontWeight: '600', color: 'var(--gray-900)', fontSize: '13px' }}>
+                            {unitInfo.clientName}
+                          </span>
+                          <div style={{ fontSize: '11px', color: 'var(--gray-500)', marginTop: '2px' }}>
+                            {unitInfo.address}
+                          </div>
+                        </div>
+                      )}
                     </td>
 
                     {/* Sensor */}
@@ -236,20 +416,10 @@ export const Dispositivos: React.FC = () => {
                         <button
                           className="btn-secondary"
                           onClick={() => navigate(`/operador/dispositivos/${d.id}`)}
-                          title="Ver detalhes e telemetria"
+                          title="Ver detalhes, telemetria e laudos"
                           style={{ padding: '8px 12px' }}
                         >
                           <Eye size={14} /> Detalhes
-                        </button>
-
-                        <button
-                          className="btn-secondary"
-                          onClick={() => handleActionClick(d, 'limitar')}
-                          title="Limitar Consumo"
-                          disabled={d.status.toLowerCase() === 'suspenso' || pendingRemoval}
-                          style={{ padding: '8px 12px' }}
-                        >
-                          <Slash size={14} style={{ color: 'var(--amber-400)' }} /> Limitar
                         </button>
 
                         {d.status.toLowerCase() === 'suspenso' ? (
@@ -290,9 +460,7 @@ export const Dispositivos: React.FC = () => {
         message={
           actionType === 'cortar'
             ? `Deseja realmente CORTAR o fornecimento de energia elétrica do aparelho "${selectedDevice?.nome}"? Esta ação interromperá as operações de consumo imediatamente.`
-            : actionType === 'limitar'
-              ? `Deseja limitar a potência de operação do aparelho "${selectedDevice?.nome}" para o limite econômico estabelecido?`
-              : `Deseja restaurar o fornecimento pleno de energia do aparelho "${selectedDevice?.nome}"?`
+            : `Deseja restaurar o fornecimento pleno de energia do aparelho "${selectedDevice?.nome}"?`
         }
         onConfirm={handleConfirmAction}
         onCancel={() => {

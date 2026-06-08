@@ -11,6 +11,7 @@ export const SensorNovo: React.FC = () => {
 
   const [modeloSensor, setModeloSensor] = useState('')
   const [numeroSerie, setNumeroSerie] = useState('')
+  const [observacao, setObservacao] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,7 +26,8 @@ export const SensorNovo: React.FC = () => {
       setIsSubmitting(true)
       const res = await api.post('/sensores', {
         modeloSensor: modeloSensor.trim(),
-        numeroSerie: numeroSerie.trim()
+        numeroSerie: numeroSerie.trim(),
+        observacao: observacao.trim() || null
       })
 
       if (res.data.success) {
@@ -109,6 +111,31 @@ export const SensorNovo: React.FC = () => {
                   width: '100%',
                   boxSizing: 'border-box',
                   fontFamily: 'monospace'
+                }}
+              />
+            </div>
+
+            {/* Comentários / Observações */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--gray-900)' }}>
+                Comentários / Observações
+              </label>
+              <textarea
+                className="form-input"
+                placeholder="Ex: Recomendado para análises detalhadas."
+                value={observacao}
+                onChange={(e) => setObservacao(e.target.value)}
+                disabled={isSubmitting}
+                rows={4}
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--white-dim)',
+                  backgroundColor: 'var(--white-pure)',
+                  fontSize: '14px',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  resize: 'vertical'
                 }}
               />
             </div>

@@ -10,5 +10,6 @@ namespace GreenEnergy.API.Services
         Task<ApiResponse<RelatorioTecnicoResponseDTO>> GetByIdAsync(int id);
         Task<ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>> ListAllAsync();
         Task<ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>> ListByChamadoIdAsync(int chamadoId);
+        Task<ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>> ListByDispositivoIdAsync(int dispositivoId);
     }
 }

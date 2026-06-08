@@ -20,6 +20,7 @@ namespace GreenEnergy.API.Repositories
         {
             return await _context.RelatoriosTecnicos
                 .Include(r => r.Chamado)
+                    .ThenInclude(c => c.Dispositivo)
                 .Include(r => r.Operador)
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
@@ -28,6 +29,7 @@ namespace GreenEnergy.API.Repositories
         {
             return await _context.RelatoriosTecnicos
                 .Include(r => r.Chamado)
+                    .ThenInclude(c => c.Dispositivo)
                 .Include(r => r.Operador)
                 .ToListAsync();
         }
@@ -36,6 +38,7 @@ namespace GreenEnergy.API.Repositories
         {
             return await _context.RelatoriosTecnicos
                 .Include(r => r.Chamado)
+                    .ThenInclude(c => c.Dispositivo)
                 .Include(r => r.Operador)
                 .Where(r => r.ChamadoId == chamadoId)
                 .ToListAsync();

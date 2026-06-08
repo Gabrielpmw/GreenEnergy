@@ -90,5 +90,16 @@ namespace GreenEnergy.API.Controllers
             }
             return Ok(result);
         }
+
+        /// <summary>
+        /// Lista todos os relatórios técnicos associados a um dispositivo específico. Apenas Administradores e Operadores.
+        /// </summary>
+        [HttpGet("dispositivo/{id}")]
+        [ProducesResponseType(typeof(ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetByDispositivo(int id)
+        {
+            var result = await _relatorioService.ListByDispositivoIdAsync(id);
+            return Ok(result);
+        }
     }
 }

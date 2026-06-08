@@ -13,6 +13,7 @@ interface Sensor {
   numeroSerie: string
   status: string
   ultimoSinal?: string
+  observacao?: string
 }
 
 export const Sensores: React.FC = () => {
@@ -140,8 +141,15 @@ export const Sensores: React.FC = () => {
               {sensores.map((s) => (
                 <tr key={s.id} style={{ borderBottom: '1px solid var(--white-muted)' }}>
                   {/* Modelo */}
-                  <td style={{ padding: '16px', fontWeight: '600', color: 'var(--gray-900)' }}>
-                    {s.modeloSensor}
+                  <td style={{ padding: '16px' }}>
+                    <div style={{ fontWeight: '600', color: 'var(--gray-900)' }}>
+                      {s.modeloSensor}
+                    </div>
+                    {s.observacao && (
+                      <div style={{ fontSize: '12px', color: 'var(--green-700)', marginTop: '4px', fontStyle: 'italic' }}>
+                        Obs: {s.observacao}
+                      </div>
+                    )}
                   </td>
 
                   {/* Número de Série */}

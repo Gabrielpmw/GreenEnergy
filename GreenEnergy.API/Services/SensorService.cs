@@ -29,7 +29,8 @@ namespace GreenEnergy.API.Services
             {
                 ModeloSensor = dto.ModeloSensor,
                 NumeroSerie = dto.NumeroSerie,
-                Status = SensorStatus.Disponivel
+                Status = SensorStatus.Disponivel,
+                Observacao = dto.Observacao
             };
 
             await _sensorRepository.AddAsync(sensor);
@@ -81,6 +82,7 @@ namespace GreenEnergy.API.Services
 
             sensor.ModeloSensor = dto.ModeloSensor;
             sensor.NumeroSerie = dto.NumeroSerie;
+            sensor.Observacao = dto.Observacao;
 
             await _sensorRepository.UpdateAsync(sensor);
 
@@ -134,7 +136,8 @@ namespace GreenEnergy.API.Services
                 ModeloSensor = s.ModeloSensor,
                 NumeroSerie = s.NumeroSerie,
                 Status = s.Status.ToString(),
-                UltimoSinal = s.UltimoSinal
+                UltimoSinal = s.UltimoSinal,
+                Observacao = s.Observacao
             };
         }
     }

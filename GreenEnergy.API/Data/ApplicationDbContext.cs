@@ -234,7 +234,7 @@ namespace GreenEnergy.API.Data
                 {
                     Id = 1,
                     Nome = "Climatização",
-                    Descricao = "Aparelhos de ar condicionado, ventiladores e aquecedores",
+                    Descricao = "Ar condicionado, aquecedores e ventiladores",
                     IconeUrl = "thermometer",
                     IsActive = true,
                     IsDeleted = false
@@ -242,8 +242,8 @@ namespace GreenEnergy.API.Data
                 new CategoriaAparelho
                 {
                     Id = 2,
-                    Nome = "Linha Branca",
-                    Descricao = "Geladeiras, freezers, fornos e máquinas de lavar",
+                    Nome = "Eletrodomésticos",
+                    Descricao = "Geladeira, fogão, micro-ondas, freezer e máquina de lavar",
                     IconeUrl = "kitchen",
                     IsActive = true,
                     IsDeleted = false
@@ -252,8 +252,26 @@ namespace GreenEnergy.API.Data
                 {
                     Id = 3,
                     Nome = "Eletrônicos",
-                    Descricao = "Computadores, televisores, consoles de videogame e roteadores",
+                    Descricao = "Televisão, computador, roteador e consoles de videogame",
                     IconeUrl = "tv",
+                    IsActive = true,
+                    IsDeleted = false
+                },
+                new CategoriaAparelho
+                {
+                    Id = 4,
+                    Nome = "Iluminação",
+                    Descricao = "Lâmpadas LED, luminárias e fitas de LED",
+                    IconeUrl = "lightbulb",
+                    IsActive = true,
+                    IsDeleted = false
+                },
+                new CategoriaAparelho
+                {
+                    Id = 5,
+                    Nome = "Outros / Uso Geral",
+                    Descricao = "Carregadores, adaptadores e tomadas inteligentes",
+                    IconeUrl = "plug",
                     IsActive = true,
                     IsDeleted = false
                 }

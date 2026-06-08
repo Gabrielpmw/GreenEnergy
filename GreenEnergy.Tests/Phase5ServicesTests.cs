@@ -112,7 +112,7 @@ namespace GreenEnergy.Tests
             _dispositivoService = new DispositivoService(_dispositivoRepo, _unidadeRepo, _categoriaRepo, _sensorRepo, _anotacaoRepo, null!);
             _chamadoService = new ChamadoService(_chamadoRepo, _dispositivoRepo, _sensorRepo, _unidadeRepo);
             _metaService = new MetaService(_metaRepo, _dispositivoRepo, _unidadeRepo);
-            _relatorioService = new RelatorioTecnicoService(_relatorioRepo, _chamadoRepo);
+            _relatorioService = new RelatorioTecnicoService(_relatorioRepo, _chamadoRepo, _dispositivoRepo, _unidadeRepo);
         }
 
         // --- TESTES DE METAS ---

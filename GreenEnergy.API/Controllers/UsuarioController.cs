@@ -43,12 +43,12 @@ namespace GreenEnergy.API.Controllers
         }
 
         /// <summary>
-        /// Lista todos os Clientes cadastrados. Apenas Administradores têm acesso.
+        /// Lista todos os Clientes cadastrados. Apenas Administradores e Operadores têm acesso.
         /// </summary>
         /// <returns>Lista de clientes do sistema.</returns>
         /// <response code="200">Retorna a lista de clientes.</response>
         [HttpGet("clientes")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Operador")]
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<UsuarioResponseDTO>>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetClientes()
         {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Cpu, Zap, Calendar, Shield, Power, Slash } from 'lucide-react'
+import { ArrowLeft, Cpu, Zap, Calendar, Shield, Power, FileText, Plus } from 'lucide-react'
 import { Spinner } from '../../components/ui/Spinner'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import { ErrorBoundary } from '../../components/ErrorBoundary'
@@ -45,6 +45,18 @@ interface Telemetry {
   registradoEm: string
 }
 
+interface Relatorio {
+  id: number
+  chamadoId: number
+  dispositivoId?: number
+  dispositivoNome?: string
+  descricao: string
+  diagnostico: string
+  solucaoRecomendada: string
+  criadoEm: string
+  operadorNome: string
+}
+
 export const DispositivoDetalhe: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -52,12 +64,21 @@ export const DispositivoDetalhe: React.FC = () => {
 
   const [device, setDevice] = useState<Device | null>(null)
   const [telemetries, setTelemetries] = useState<Telemetry[]>([])
+  const [relatorios, setRelatorios] = useState<Relatorio[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRelatoriosLoading, setIsRelatoriosLoading] = useState(false)
 
   // Modais de ações de energia
-  const [actionType, setActionType] = useState<'limitar' | 'cortar' | 'restaurar' | null>(null)
+  const [actionType, setActionType] = useState<'cortar' | 'restaurar' | null>(null)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+
+  // Modal de Criação de Laudo
+  const [isLaudoModalOpen, setIsLaudoModalOpen] = useState(false)
+  const [laudoDescricao, setLaudoDescricao] = useState('')
+  const [laudoDiagnostico, setLaudoDiagnostico] = useState('')
+  const [laudoSolucao, setLaudoSolucao] = useState('')
+  const [isLaudoSubmitting, setIsLaudoSubmitting] = useState(false)
 
   const fetchDeviceData = async () => {
     if (!id) return
@@ -83,6 +104,9 @@ export const DispositivoDetalhe: React.FC = () => {
         console.error('Erro ao buscar telemetrias:', teleErr)
       }
 
+      // Laudos Técnicos
+      await fetchRelatorios()
+
     } catch (err: any) {
       console.error('Erro ao buscar dispositivo:', err)
       const msg = err.response?.data?.message || 'Erro de comunicação com o servidor.'
@@ -92,11 +116,26 @@ export const DispositivoDetalhe: React.FC = () => {
     }
   }
 
+  const fetchRelatorios = async () => {
+    if (!id) return
+    try {
+      setIsRelatoriosLoading(true)
+      const relatoriosRes = await api.get(`/relatorios/dispositivo/${id}`)
+      if (relatoriosRes.data.success) {
+        setRelatorios(relatoriosRes.data.data || [])
+      }
+    } catch (err) {
+      console.error('Erro ao buscar relatórios técnicos:', err)
+    } finally {
+      setIsRelatoriosLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchDeviceData()
   }, [id])
 
-  const handleActionClick = (type: 'limitar' | 'cortar' | 'restaurar') => {
+  const handleActionClick = (type: 'cortar' | 'restaurar') => {
     setActionType(type)
     setIsConfirmOpen(true)
   }
@@ -120,6 +159,45 @@ export const DispositivoDetalhe: React.FC = () => {
       setActionLoading(false)
       setIsConfirmOpen(false)
       setActionType(null)
+    }
+  }
+
+  const handleCreateLaudo = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!id) return
+
+    if (!laudoDescricao.trim() || !laudoDiagnostico.trim() || !laudoSolucao.trim()) {
+      addToast('Por favor, preencha todos os campos do laudo.', 'warning')
+      return
+    }
+
+    try {
+      setIsLaudoSubmitting(true)
+      const payload = {
+        dispositivoId: parseInt(id, 10),
+        descricao: laudoDescricao.trim(),
+        diagnostico: laudoDiagnostico.trim(),
+        solucaoRecomendada: laudoSolucao.trim()
+      }
+
+      const res = await api.post('/relatorios', payload)
+      if (res.data.success) {
+        addToast('Laudo Técnico criado com sucesso!', 'success')
+        setIsLaudoModalOpen(false)
+        setLaudoDescricao('')
+        setLaudoDiagnostico('')
+        setLaudoSolucao('')
+        // Recarregar os relatórios e os dados do dispositivo
+        fetchDeviceData()
+      } else {
+        addToast(res.data.message || 'Erro ao criar laudo técnico.', 'error')
+      }
+    } catch (err: any) {
+      console.error('Erro ao cadastrar laudo:', err)
+      const msg = err.response?.data?.message || 'Falha ao processar cadastro do laudo.'
+      addToast(msg, 'error')
+    } finally {
+      setIsLaudoSubmitting(false)
     }
   }
 
@@ -208,7 +286,7 @@ export const DispositivoDetalhe: React.FC = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '24px' }} className="details-responsive-grid">
         
-        {/* Coluna Esquerda: Gráfico de Telemetria */}
+        {/* Coluna Esquerda: Gráfico de Telemetria e Laudos Técnicos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
           <div className="profile-card" style={{ padding: '24px', maxWidth: 'none' }}>
@@ -311,6 +389,79 @@ export const DispositivoDetalhe: React.FC = () => {
             )}
           </div>
 
+          {/* Seção de Laudos Técnicos */}
+          <div className="profile-card" style={{ padding: '24px', maxWidth: 'none' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 className="profile-section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <FileText size={20} color="var(--green-700)" />
+                Histórico de Laudos Técnicos
+              </h2>
+              <button 
+                className="btn-primary" 
+                style={{ padding: '6px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                onClick={() => setIsLaudoModalOpen(true)}
+              >
+                <Plus size={14} /> Novo Laudo
+              </button>
+            </div>
+
+            {isRelatoriosLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '24px' }}>
+                <Spinner size="sm" />
+              </div>
+            ) : relatorios.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '24px',
+                color: 'var(--gray-500)',
+                border: '1px dashed var(--white-dim)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '13.5px'
+              }}>
+                Nenhum laudo técnico cadastrado para este dispositivo.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {relatorios.map((r) => (
+                  <div key={r.id} style={{
+                    padding: '16px',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--white-muted)',
+                    backgroundColor: 'var(--white-soft)'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                      <div>
+                        <strong style={{ fontSize: '14px', color: 'var(--gray-900)' }}>Laudo #{r.id}</strong>
+                        <div style={{ fontSize: '11px', color: 'var(--gray-500)' }}>
+                          Vinculado ao chamado #{r.chamadoId}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right', fontSize: '11px', color: 'var(--gray-500)' }}>
+                        <div>Por: {r.operadorNome}</div>
+                        <div>{formatDateTime(r.criadoEm)}</div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: 'var(--gray-900)' }}>
+                      <div>
+                        <span style={{ fontWeight: '600', color: 'var(--gray-500)' }}>Descrição do Problema: </span>
+                        <span>{r.descricao}</span>
+                      </div>
+                      <div>
+                        <span style={{ fontWeight: '600', color: 'var(--gray-500)' }}>Diagnóstico Técnico: </span>
+                        <span>{r.diagnostico}</span>
+                      </div>
+                      <div>
+                        <span style={{ fontWeight: '600', color: 'var(--gray-500)' }}>Solução Recomendada: </span>
+                        <span>{r.solucaoRecomendada}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
         </div>
 
         {/* Coluna Direita: Detalhes, Status, Controle Remoto */}
@@ -324,15 +475,6 @@ export const DispositivoDetalhe: React.FC = () => {
             </h2>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-              <button
-                className="btn-secondary"
-                onClick={() => handleActionClick('limitar')}
-                disabled={device.status.toLowerCase() === 'suspenso' || actionLoading}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-              >
-                <Slash size={16} style={{ color: 'var(--amber-400)' }} /> Limitar Carga de Operação
-              </button>
-
               {device.status.toLowerCase() === 'suspenso' ? (
                 <button
                   className="btn-primary"
@@ -427,9 +569,7 @@ export const DispositivoDetalhe: React.FC = () => {
         message={
           actionType === 'cortar'
             ? `Você está prestes a CORTAR o fornecimento de energia elétrica deste aparelho. Esta ação é de alto impacto técnico. Confirma?`
-            : actionType === 'limitar'
-              ? `Deseja limitar a potência de operação do aparelho intelligentemente para economizar consumo?`
-              : `Deseja restaurar o fornecimento pleno de energia do aparelho intelligentemente?`
+            : `Deseja restaurar o fornecimento pleno de energia do aparelho intelligentemente?`
         }
         onConfirm={handleConfirmAction}
         onCancel={() => {
@@ -439,6 +579,127 @@ export const DispositivoDetalhe: React.FC = () => {
         confirmText="Confirmar Ação"
         isDestructive={actionType === 'cortar'}
       />
+
+      {/* Modal de Criação de Laudo Técnico */}
+      {isLaudoModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div className="form-card" style={{ maxWidth: '600px', width: '90%', margin: '0 20px' }}>
+            <h3 className="profile-section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+              <FileText size={20} color="var(--green-700)" />
+              Emitir Laudo Técnico de Manutenção
+            </h3>
+            
+            <form onSubmit={handleCreateLaudo}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--gray-900)' }}>
+                    Descrição do Problema *
+                  </label>
+                  <textarea
+                    className="form-input"
+                    rows={3}
+                    placeholder="Descreva a falha reportada..."
+                    value={laudoDescricao}
+                    onChange={(e) => setLaudoDescricao(e.target.value)}
+                    required
+                    disabled={isLaudoSubmitting}
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--white-dim)',
+                      backgroundColor: 'var(--white-pure)',
+                      fontSize: '13px',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--gray-900)' }}>
+                    Diagnóstico Técnico *
+                  </label>
+                  <textarea
+                    className="form-input"
+                    rows={3}
+                    placeholder="Descreva a análise feita e o estado dos componentes..."
+                    value={laudoDiagnostico}
+                    onChange={(e) => setLaudoDiagnostico(e.target.value)}
+                    required
+                    disabled={isLaudoSubmitting}
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--white-dim)',
+                      backgroundColor: 'var(--white-pure)',
+                      fontSize: '13px',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--gray-900)' }}>
+                    Solução Recomendada *
+                  </label>
+                  <textarea
+                    className="form-input"
+                    rows={3}
+                    placeholder="Descreva a intervenção executada ou ações futuras..."
+                    value={laudoSolucao}
+                    onChange={(e) => setLaudoSolucao(e.target.value)}
+                    required
+                    disabled={isLaudoSubmitting}
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--white-dim)',
+                      backgroundColor: 'var(--white-pure)',
+                      fontSize: '13px',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => {
+                      setIsLaudoModalOpen(false)
+                      setLaudoDescricao('')
+                      setLaudoDiagnostico('')
+                      setLaudoSolucao('')
+                    }}
+                    disabled={isLaudoSubmitting}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={isLaudoSubmitting}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    {isLaudoSubmitting && <Spinner size="sm" color="white" />}
+                    Gravar Laudo
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -68,6 +68,8 @@ namespace GreenEnergy.API.Models.DTOs
         public string Role { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public DateTime CriadoEm { get; set; }
+        public string? Documento { get; set; }
+        public string? Telefone { get; set; }
     }
 
     public class PerfilResponseDTO

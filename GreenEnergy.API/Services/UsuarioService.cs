@@ -27,7 +27,9 @@ namespace GreenEnergy.API.Services
                 Email = u.Email,
                 Role = u.Role.ToString(),
                 IsActive = u.IsActive,
-                CriadoEm = u.CriadoEm
+                CriadoEm = u.CriadoEm,
+                Documento = u.Perfil?.Documento,
+                Telefone = u.Perfil?.Telefone
             });
 
             return new ApiResponse<IEnumerable<UsuarioResponseDTO>>(dtos, "Usuários listados com sucesso.");

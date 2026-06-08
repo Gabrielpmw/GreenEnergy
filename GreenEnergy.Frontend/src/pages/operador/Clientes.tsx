@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Users, Home, MapPin, RefreshCw } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Users, Home, MapPin, RefreshCw, Cpu, Phone } from 'lucide-react'
 import { Spinner } from '../../components/ui/Spinner'
 import { EmptyState } from '../../components/ui/EmptyState'
 import api from '../../services/api'
@@ -31,10 +32,13 @@ interface Chamado {
 interface GroupedClient {
   id: number
   name: string
+  documento?: string
+  telefone?: string
   unidades: UnidadeConsumidora[]
 }
 
 export const Clientes: React.FC = () => {
+  const navigate = useNavigate()
   const [groupedClients, setGroupedClients] = useState<GroupedClient[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -43,10 +47,11 @@ export const Clientes: React.FC = () => {
     try {
       setIsLoading(true)
       
-      // Busca unidades e chamados em paralelo
-      const [unidadesRes, chamadosRes] = await Promise.allSettled([
+      // Busca unidades, chamados e clientes em paralelo
+      const [unidadesRes, chamadosRes, clientesRes] = await Promise.allSettled([
         api.get('/unidades'),
-        api.get('/chamados')
+        api.get('/chamados'),
+        api.get('/usuarios/clientes')
       ])
 
       let unidades: UnidadeConsumidora[] = []
@@ -59,10 +64,25 @@ export const Clientes: React.FC = () => {
         chamados = chamadosRes.value.data.data || []
       }
 
-      // Mapeamento de ID do usuário para Nome do Cliente usando chamados
+      let clientesList: any[] = []
+      if (clientesRes.status === 'fulfilled' && clientesRes.value.data.success) {
+        clientesList = clientesRes.value.data.data || []
+      }
+
+      // Mapeamento de ID do usuário para Nome do Cliente usando chamados (fallback)
       const userNamesMap: { [key: number]: string } = {}
       chamados.forEach((c) => {
         userNamesMap[c.clienteId] = c.clienteNome
+      })
+
+      // Mapeamento de info dos clientes obtidos pelo endpoint de usuários
+      const clientsInfoMap: { [key: number]: { nome: string; documento?: string; telefone?: string } } = {}
+      clientesList.forEach((c) => {
+        clientsInfoMap[c.id] = {
+          nome: c.nome,
+          documento: c.documento,
+          telefone: c.telefone
+        }
       })
 
       // Agrupa unidades por Cliente
@@ -76,10 +96,13 @@ export const Clientes: React.FC = () => {
 
       // Monta a lista consolidada
       const grouped: GroupedClient[] = Object.keys(clientsMap).map((key) => {
-        const id = parseInt(key)
+        const id = parseInt(key, 10)
+        const info = clientsInfoMap[id]
         return {
           id,
-          name: userNamesMap[id] || `Cliente #${id}`,
+          name: info?.nome || userNamesMap[id] || `Cliente #${id}`,
+          documento: info?.documento,
+          telefone: info?.telefone,
           unidades: clientsMap[id]
         }
       })
@@ -96,11 +119,24 @@ export const Clientes: React.FC = () => {
     fetchClientData()
   }, [])
 
-  const filteredClients = groupedClients.filter(c => {
+  const filteredClients = groupedClients.filter((c) => {
+    const cleanQuery = searchQuery.toLowerCase().replace(/\D/g, '')
     const matchesName = c.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesId = c.id.toString() === searchQuery.trim()
-    return matchesName || matchesId
+    const matchesCpf = c.documento
+      ? c.documento.replace(/\D/g, '').includes(cleanQuery)
+      : false
+
+    return matchesName || matchesId || (cleanQuery !== '' && matchesCpf)
   })
+
+  // Função para formatar o CPF
+  const formatCPF = (cpf?: string) => {
+    if (!cpf) return ''
+    const clean = cpf.replace(/\D/g, '')
+    if (clean.length !== 11) return cpf
+    return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6, 9)}-${clean.slice(9)}`
+  }
 
   if (isLoading) {
     return (
@@ -132,7 +168,7 @@ export const Clientes: React.FC = () => {
       <div style={{ marginBottom: '24px' }}>
         <input
           type="text"
-          placeholder="Buscar por nome do cliente ou ID..."
+          placeholder="Buscar por nome, CPF ou ID do cliente..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
@@ -167,11 +203,46 @@ export const Clientes: React.FC = () => {
                 borderRadius: 'var(--radius-lg)'
               }}
             >
-              <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--gray-900)', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Users size={20} style={{ color: 'var(--green-700)' }} />
-                {client.name} 
-                <span style={{ fontSize: '13px', fontWeight: '400', color: 'var(--gray-500)' }}>(ID: {client.id})</span>
-              </h3>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                flexWrap: 'wrap',
+                gap: '12px',
+                borderBottom: '1px solid var(--white-muted)',
+                paddingBottom: '16px',
+                marginBottom: '16px'
+              }}>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--gray-900)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Users size={20} style={{ color: 'var(--green-700)' }} />
+                    {client.name} 
+                    <span style={{ fontSize: '13px', fontWeight: '400', color: 'var(--gray-500)' }}>(ID: {client.id})</span>
+                  </h3>
+                  {client.documento && (
+                    <div style={{ fontSize: '13px', color: 'var(--gray-500)' }}>
+                      <strong>CPF:</strong> {formatCPF(client.documento)}
+                    </div>
+                  )}
+                </div>
+
+                {client.telefone && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13.5px',
+                    color: 'var(--gray-600)',
+                    backgroundColor: 'var(--white-soft)',
+                    padding: '6px 12px',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--white-dim)'
+                  }}>
+                    <Phone size={14} color="var(--green-700)" />
+                    <span>{client.telefone}</span>
+                  </div>
+                )}
+              </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
                 {client.unidades.map((u) => (
@@ -181,15 +252,18 @@ export const Clientes: React.FC = () => {
                       padding: '16px',
                       backgroundColor: 'var(--white-soft)',
                       borderRadius: 'var(--radius-md)',
-                      border: '1px solid var(--white-muted)'
+                      border: '1px solid var(--white-muted)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                      <Home size={16} style={{ color: 'var(--green-700)' }} />
-                      <strong style={{ fontSize: '14px', color: 'var(--gray-900)' }}>{u.nome}</strong>
-                    </div>
-
                     <div style={{ fontSize: '13px', color: 'var(--gray-500)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <Home size={16} style={{ color: 'var(--green-700)', flexShrink: 0 }} />
+                        <strong style={{ fontSize: '14px', color: 'var(--gray-900)' }}>{u.nome}</strong>
+                      </div>
+
                       <div>
                         <span>Tipo de Imóvel:</span>{' '}
                         <span className="unit-type-badge residencial" style={{ textTransform: 'capitalize', fontSize: '11px', padding: '2px 6px' }}>
@@ -197,7 +271,7 @@ export const Clientes: React.FC = () => {
                         </span>
                       </div>
                       
-                      <div style={{ display: 'flex', gap: '4px', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', gap: '4px', alignItems: 'flex-start', marginTop: '4px' }}>
                         <MapPin size={14} style={{ marginTop: '2px', flexShrink: 0 }} />
                         <span>
                           {u.endereco.logradouro}, {u.endereco.numero} {u.endereco.complemento && ` - ${u.endereco.complemento}`}<br />
@@ -206,6 +280,23 @@ export const Clientes: React.FC = () => {
                         </span>
                       </div>
                     </div>
+
+                    <button
+                      className="btn-primary"
+                      onClick={() => navigate(`/operador/dispositivos?unidadeId=${u.id}`)}
+                      style={{
+                        marginTop: '16px',
+                        width: '100%',
+                        fontSize: '12px',
+                        padding: '8px 12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Cpu size={14} /> Ver Dispositivos Conectados
+                    </button>
                   </div>
                 ))}
               </div>

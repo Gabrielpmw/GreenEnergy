@@ -10,6 +10,8 @@ namespace GreenEnergy.API.Models.Entities
         public string NumeroSerie { get; set; } = string.Empty;
         public SensorStatus Status { get; set; } = SensorStatus.Disponivel;
         public DateTime? UltimoSinal { get; set; }
+        public string? Observacao { get; set; }
+
 
         // Propriedades de Navegação
         public virtual Dispositivo Dispositivo { get; set; } = null!;

@@ -10,6 +10,8 @@ namespace GreenEnergy.API.Models.DTOs
 
         [Required(ErrorMessage = "O número de série é obrigatório.")]
         public string NumeroSerie { get; set; } = string.Empty;
+
+        public string? Observacao { get; set; }
     }
 
     public class UpdateSensorRequestDTO
@@ -19,6 +21,8 @@ namespace GreenEnergy.API.Models.DTOs
 
         [Required(ErrorMessage = "O número de série é obrigatório.")]
         public string NumeroSerie { get; set; } = string.Empty;
+
+        public string? Observacao { get; set; }
     }
 
     public class SensorResponseDTO
@@ -30,5 +34,7 @@ namespace GreenEnergy.API.Models.DTOs
         public string NumeroSerie { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty; // Disponivel, EmUso, Manutencao, Defeito
         public DateTime? UltimoSinal { get; set; }
+        public string? Observacao { get; set; }
     }
 }
+
