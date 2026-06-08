@@ -206,10 +206,22 @@ namespace GreenEnergy.API.Data
                 int numUnidades = random.Next(1, 4);
                 for (int u = 1; u <= numUnidades; u++)
                 {
+                    var tipoImovel = (TipoImovel)random.Next(3);
+                    string nomeUnidade = u == 1 ? "Residência Principal" : u == 2 ? "Casa de Campo" : "Ponto de Apoio";
+                    if (tipoImovel == TipoImovel.Comercial)
+                    {
+                        nomeUnidade = u == 1 ? "Escritório Principal" : "Depósito/Filial";
+                    }
+                    else if (tipoImovel == TipoImovel.Apartamento)
+                    {
+                        nomeUnidade = u == 1 ? "Apartamento Centro" : "Apartamento Praia";
+                    }
+
                     var unidade = new UnidadeConsumidora
                     {
+                        Nome = nomeUnidade,
                         UsuarioId = cliente.Id,
-                        TipoImovel = (TipoImovel)random.Next(3), // Casa, Apartamento, Comercial
+                        TipoImovel = tipoImovel,
                         CEP = cepInfo.CEP,
                         Cidade = cepInfo.Cidade,
                         Estado = cepInfo.UF,

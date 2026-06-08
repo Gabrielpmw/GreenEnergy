@@ -22,6 +22,7 @@ export const UnidadesNova: React.FC = () => {
   const numeroRef = useRef<HTMLInputElement>(null)
 
   // Form states
+  const [nome, setNome] = useState('')
   const [cep, setCep] = useState('')
   const [tipoImovel, setTipoImovel] = useState('0') // 0 = Casa, 1 = Apartamento, 2 = Comercial
   const [logradouro, setLogradouro] = useState('')
@@ -95,6 +96,11 @@ export const UnidadesNova: React.FC = () => {
     e.preventDefault()
     setErrorMessage(null)
 
+    if (!nome.trim()) {
+      setErrorMessage('Por favor, informe o nome de identificação da unidade.')
+      return
+    }
+
     const cleanedCep = cep.replace(/\D/g, '')
     if (cleanedCep.length !== 8) {
       setErrorMessage('Por favor, informe um CEP válido.')
@@ -110,6 +116,7 @@ export const UnidadesNova: React.FC = () => {
       setIsSaving(true)
 
       const payload = {
+        nome: nome.trim(),
         cep: cleanedCep,
         tipoImovel: parseInt(tipoImovel, 10),
         numero,
@@ -159,6 +166,22 @@ export const UnidadesNova: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit}>
+          {/* Identificação da Unidade */}
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label className="form-label" htmlFor="nome">Identificação da Unidade *</label>
+            <input
+              id="nome"
+              type="text"
+              className="form-input"
+              placeholder="Ex: Minha Casa, Casa da Namorada, Sítio"
+              maxLength={100}
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              disabled={isSaving}
+              required
+            />
+          </div>
+
           <div className="profile-row">
             {/* CEP */}
             <div className="form-group" style={{ position: 'relative' }}>

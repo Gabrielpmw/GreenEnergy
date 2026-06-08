@@ -13,6 +13,7 @@ interface Category {
 
 interface Unit {
   id: number
+  nome: string
   tipoImovel: string
   cep: string
   cidade: string
@@ -189,7 +190,7 @@ export const DispositivoNovo: React.FC = () => {
               >
                 {units.map((unit) => (
                   <option key={unit.id} value={unit.id}>
-                    Unidade #{unit.id} — {unit.tipoImovel} ({unit.cidade})
+                    {unit.nome || `Unidade #${unit.id}`} — {unit.tipoImovel} ({unit.cidade})
                   </option>
                 ))}
               </select>

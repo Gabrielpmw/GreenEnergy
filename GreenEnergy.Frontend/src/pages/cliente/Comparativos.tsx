@@ -27,6 +27,7 @@ import api from '../../services/api'
 
 interface Unit {
   id: number
+  nome: string
   tipoImovel: string
   cep: string
   cidade: string
@@ -213,7 +214,7 @@ export const Comparativos: React.FC = () => {
           >
             {units.map(u => (
               <option key={u.id} value={u.id}>
-                Unidade #{u.id} - {u.cidade}/{u.estado} ({u.tipoImovel})
+                {u.nome || `Unidade #${u.id}`} - {u.cidade}/{u.estado} ({u.tipoImovel})
               </option>
             ))}
           </select>

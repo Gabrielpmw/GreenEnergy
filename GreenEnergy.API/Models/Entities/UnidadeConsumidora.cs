@@ -4,6 +4,7 @@ namespace GreenEnergy.API.Models.Entities
 {
     public class UnidadeConsumidora : BaseEntity
     {
+        public string Nome { get; set; } = string.Empty;
         public int UsuarioId { get; set; }
         public TipoImovel TipoImovel { get; set; }
         public string CEP { get; set; } = string.Empty;

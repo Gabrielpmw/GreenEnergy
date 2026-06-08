@@ -5,6 +5,10 @@ namespace GreenEnergy.API.Models.DTOs
 {
     public class CreateUnidadeConsumidoraRequestDTO
     {
+        [Required(ErrorMessage = "O nome de identificação da unidade é obrigatório.")]
+        [StringLength(100, ErrorMessage = "O nome de identificação deve ter no máximo 100 caracteres.")]
+        public string Nome { get; set; } = string.Empty;
+
         [Required(ErrorMessage = "O CEP é obrigatório.")]
         [RegularExpression(@"^\d{5}-\d{3}$|^\d{8}$", ErrorMessage = "CEP deve estar no formato 12345-678 ou 12345678.")]
         public string CEP { get; set; } = string.Empty;
@@ -27,6 +31,7 @@ namespace GreenEnergy.API.Models.DTOs
     public class UnidadeConsumidoraResponseDTO
     {
         public int Id { get; set; }
+        public string Nome { get; set; } = string.Empty;
         public int UsuarioId { get; set; }
         public string TipoImovel { get; set; } = string.Empty;
         public string CEP { get; set; } = string.Empty;

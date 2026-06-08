@@ -17,6 +17,7 @@ interface Address {
 
 interface Unit {
   id: number
+  nome: string
   tipoImovel: string
   cep: string
   cidade: string
@@ -103,7 +104,7 @@ export const Unidades: React.FC = () => {
               <div>
                 <div className="unit-card-title-row">
                   <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--gray-900)', margin: 0 }}>
-                    Unidade #{unit.id}
+                    {unit.nome || `Unidade #${unit.id}`}
                   </h3>
                   <span className={`unit-type-badge ${unit.tipoImovel.toLowerCase()}`}>
                     {unit.tipoImovel}

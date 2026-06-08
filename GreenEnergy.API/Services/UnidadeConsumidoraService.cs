@@ -61,6 +61,7 @@ namespace GreenEnergy.API.Services
 
             var unidade = new UnidadeConsumidora
             {
+                Nome = dto.Nome,
                 UsuarioId = usuarioId,
                 TipoImovel = dto.TipoImovel,
                 CEP = cepSanitizado,
@@ -190,6 +191,7 @@ namespace GreenEnergy.API.Services
                 if (!string.IsNullOrWhiteSpace(dto.UF)) estado = dto.UF;
             }
 
+            unidade.Nome = dto.Nome;
             unidade.TipoImovel = dto.TipoImovel;
             unidade.CEP = cepSanitizado;
             unidade.Cidade = cidade;
@@ -235,6 +237,7 @@ namespace GreenEnergy.API.Services
             return new UnidadeConsumidoraResponseDTO
             {
                 Id = u.Id,
+                Nome = u.Nome,
                 UsuarioId = u.UsuarioId,
                 TipoImovel = u.TipoImovel.ToString(),
                 CEP = u.CEP,

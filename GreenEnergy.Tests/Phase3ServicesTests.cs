@@ -285,7 +285,7 @@ namespace GreenEnergy.Tests
             _viaCepClient = new FakeViaCepClient();
 
             _unidadeService = new UnidadeConsumidoraService(_unidadeRepo, _viaCepClient);
-            _dispositivoService = new DispositivoService(_dispositivoRepo, _unidadeRepo, _categoriaRepo, _sensorRepo, _anotacaoRepo);
+            _dispositivoService = new DispositivoService(_dispositivoRepo, _unidadeRepo, _categoriaRepo, _sensorRepo, _anotacaoRepo, null!);
             _sensorService = new SensorService(_sensorRepo);
             _chamadoService = new ChamadoService(_chamadoRepo, _dispositivoRepo, _sensorRepo, _unidadeRepo);
         }

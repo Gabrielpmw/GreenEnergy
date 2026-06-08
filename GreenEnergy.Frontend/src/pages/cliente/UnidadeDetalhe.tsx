@@ -28,6 +28,7 @@ interface Address {
 
 interface Unit {
   id: number
+  nome: string
   tipoImovel: string
   cep: string
   cidade: string
@@ -59,6 +60,7 @@ export const UnidadeDetalhe: React.FC = () => {
 
   // Estados de edição de endereço
   const [isEditing, setIsEditing] = useState(false)
+  const [nome, setNome] = useState('')
   const [cep, setCep] = useState('')
   const [tipoImovel, setTipoImovel] = useState('0')
   const [logradouro, setLogradouro] = useState('')
@@ -163,6 +165,7 @@ export const UnidadeDetalhe: React.FC = () => {
 
   const handleStartEditing = () => {
     if (unit) {
+      setNome(unit.nome || '')
       setCep(formatCepDisplay(unit.cep))
       const typeMap: { [key: string]: string } = { 'Casa': '0', 'Apartamento': '1', 'Comercial': '2' }
       setTipoImovel(typeMap[unit.tipoImovel] || '0')
@@ -183,6 +186,11 @@ export const UnidadeDetalhe: React.FC = () => {
     e.preventDefault()
     setEditError(null)
 
+    if (!nome.trim()) {
+      setEditError('Por favor, informe a identificação da unidade.')
+      return
+    }
+
     const cleanedCep = cep.replace(/\D/g, '')
     if (cleanedCep.length !== 8) {
       setEditError('Por favor, informe um CEP válido.')
@@ -197,6 +205,7 @@ export const UnidadeDetalhe: React.FC = () => {
     try {
       setIsSaving(true)
       const payload = {
+        nome: nome.trim(),
         cep: cleanedCep,
         tipoImovel: parseInt(tipoImovel, 10),
         numero,
@@ -209,11 +218,11 @@ export const UnidadeDetalhe: React.FC = () => {
 
       const res = await api.put(`/unidades/${id}`, payload)
       if (res.data.success) {
-        addToast('Endereço atualizado com sucesso!', 'success')
+        addToast('Unidade atualizada com sucesso!', 'success')
         setUnit(res.data.value || res.data.data)
         setIsEditing(false)
       } else {
-        setEditError(res.data.message || 'Erro ao atualizar o endereço.')
+        setEditError(res.data.message || 'Erro ao atualizar a unidade.')
       }
     } catch (err: any) {
       console.error(err)
@@ -257,7 +266,7 @@ export const UnidadeDetalhe: React.FC = () => {
           <ArrowLeft size={14} />
           Voltar para Unidades
         </button>
-        <h1 className="dashboard-title">Unidade Consumidora #{unit.id}</h1>
+        <h1 className="dashboard-title">{unit.nome || `Unidade Consumidora #${unit.id}`}</h1>
         <p className="dashboard-subtitle">Informações de endereço e dispositivos inteligentes vinculados.</p>
       </header>
 
@@ -267,7 +276,7 @@ export const UnidadeDetalhe: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', color: 'var(--green-900)' }}>
             <Home size={20} />
             <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>
-              {isEditing ? 'Editar Endereço' : 'Endereço Registrado'}
+              {isEditing ? 'Editar Unidade' : 'Endereço Registrado'}
             </h3>
           </div>
 
@@ -278,6 +287,21 @@ export const UnidadeDetalhe: React.FC = () => {
                   <span className="toast-message" style={{ fontSize: '13px' }}>{editError}</span>
                 </div>
               )}
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="nome">Identificação da Unidade *</label>
+                <input
+                  id="nome"
+                  type="text"
+                  className="form-input"
+                  placeholder="Ex: Minha Casa"
+                  maxLength={100}
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  disabled={isSaving}
+                  required
+                />
+              </div>
 
               <div className="form-group">
                 <label className="form-label" htmlFor="cep">CEP *</label>
