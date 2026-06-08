@@ -9,15 +9,16 @@ import { Perfil as ClientePerfil } from './pages/cliente/Perfil'
 import { Unidades as ClienteUnidades } from './pages/cliente/Unidades'
 import { UnidadesNova as ClienteUnidadesNova } from './pages/cliente/UnidadesNova'
 import { UnidadeDetalhe as ClienteUnidadeDetalhe } from './pages/cliente/UnidadeDetalhe'
-const ClienteDispositivos = () => <div><h3>Meus Dispositivos</h3><p>Gerenciamento de aparelhos cadastrados.</p></div>
-const ClienteDispositivoNovo = () => <div><h3>Cadastrar Dispositivo</h3><p>Vincular novo aparelho a uma unidade.</p></div>
-const ClienteDispositivoDetalhe = () => <div><h3>Detalhe do Dispositivo</h3><p>Consumo detalhado, anotações e metas.</p></div>
+import { Dispositivos as ClienteDispositivos } from './pages/cliente/Dispositivos'
+import { DispositivoNovo as ClienteDispositivoNovo } from './pages/cliente/DispositivoNovo'
+import { DispositivoDetalhe as ClienteDispositivoDetalhe } from './pages/cliente/DispositivoDetalhe'
+import { Tarifas as ClienteTarifas } from './pages/cliente/Tarifas'
+
 const ClienteChamados = () => <div><h3>Meus Chamados</h3><p>Lista de perícias e desativações solicitadas.</p></div>
 const ClienteChamadoNovo = () => <div><h3>Novo Chamado</h3><p>Abertura de chamado técnico de perícia ou remoção.</p></div>
 const ClienteMetas = () => <div><h3>Minhas Metas</h3><p>Limite mensal em kWh ou R$.</p></div>
 const ClienteMetaNova = () => <div><h3>Nova Meta</h3><p>Proposta de limite para consumo de dispositivo.</p></div>
 const ClienteComparativos = () => <div><h3>Comparativos Regionais</h3><p>Consumo médio da rede e eficiência regional.</p></div>
-const ClienteTarifas = () => <div><h3>Tarifas</h3><p>Bandeira vigente e histórico tarifário.</p></div>
 
 // Stubs de Páginas do Operador
 const OperadorDashboard = () => <div><h3>Painel de Operações</h3><p>Gerenciamento de chamados técnicos e estoque de sensores.</p></div>

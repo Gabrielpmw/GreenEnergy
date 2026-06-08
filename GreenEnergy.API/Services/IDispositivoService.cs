@@ -21,6 +21,9 @@ namespace GreenEnergy.API.Services
         Task<ApiResponse<AnotacaoDispositivoResponseDTO>> UpdateAnotacaoAsync(int anotacaoId, UpdateAnotacaoDispositivoRequestDTO dto, int requestUserId);
         Task<ApiResponse<bool>> DesativarAnotacaoAsync(int anotacaoId, int requestUserId);
 
+        // Telemetria / Histórico
+        Task<ApiResponse<IEnumerable<TelemetriaResponseDTO>>> ListTelemetriasAsync(int dispositivoId, int requestUserId, string requestUserRole);
+
         // Controle Remoto
         Task<ApiResponse<DispositivoResponseDTO>> LimitarAsync(int id);
         Task<ApiResponse<DispositivoResponseDTO>> CortarAsync(int id);

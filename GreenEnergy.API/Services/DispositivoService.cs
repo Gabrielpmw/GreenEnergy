@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using GreenEnergy.API.Data;
 using GreenEnergy.API.Models.DTOs;
 using GreenEnergy.API.Models.Entities;
 using GreenEnergy.API.Repositories;
@@ -15,19 +17,22 @@ namespace GreenEnergy.API.Services
         private readonly ICategoriaAparelhoRepository _categoriaRepository;
         private readonly ISensorRepository _sensorRepository;
         private readonly IAnotacaoDispositivoRepository _anotacaoRepository;
+        private readonly ApplicationDbContext _context;
 
         public DispositivoService(
             IDispositivoRepository dispositivoRepository,
             IUnidadeConsumidoraRepository unidadeRepository,
             ICategoriaAparelhoRepository categoriaRepository,
             ISensorRepository sensorRepository,
-            IAnotacaoDispositivoRepository anotacaoRepository)
+            IAnotacaoDispositivoRepository anotacaoRepository,
+            ApplicationDbContext context)
         {
             _dispositivoRepository = dispositivoRepository;
             _unidadeRepository = unidadeRepository;
             _categoriaRepository = categoriaRepository;
             _sensorRepository = sensorRepository;
             _anotacaoRepository = anotacaoRepository;
+            _context = context;
         }
 
         public async Task<ApiResponse<DispositivoResponseDTO>> CreateDispositivoAsync(CreateDispositivoRequestDTO dto, int requestUserId, string requestUserRole)
@@ -419,6 +424,51 @@ namespace GreenEnergy.API.Services
 
             var response = MapToResponse(dispositivo);
             return new ApiResponse<DispositivoResponseDTO>(response, "Fornecimento de energia do dispositivo restaurado com sucesso.");
+        }
+
+        public async Task<ApiResponse<IEnumerable<TelemetriaResponseDTO>>> ListTelemetriasAsync(int dispositivoId, int requestUserId, string requestUserRole)
+        {
+            var dispositivo = await _dispositivoRepository.GetByIdAsync(dispositivoId);
+            if (dispositivo == null)
+            {
+                return new ApiResponse<IEnumerable<TelemetriaResponseDTO>>("Dispositivo não encontrado.");
+            }
+
+            var unidade = await _unidadeRepository.GetByIdAsync(dispositivo.UnidadeConsumidoraId);
+            if (unidade == null)
+            {
+                return new ApiResponse<IEnumerable<TelemetriaResponseDTO>>("Unidade Consumidora não encontrada.");
+            }
+
+            if (requestUserRole == "Cliente" && unidade.UsuarioId != requestUserId)
+            {
+                return new ApiResponse<IEnumerable<TelemetriaResponseDTO>>("Acesso negado. Você não possui permissão para visualizar este dispositivo.");
+            }
+
+            if (dispositivo.Sensor == null)
+            {
+                return new ApiResponse<IEnumerable<TelemetriaResponseDTO>>(new List<TelemetriaResponseDTO>(), "O dispositivo não possui sensor físico vinculado.");
+            }
+
+            var telemetrias = await _context.Telemetrias
+                .Where(t => t.SensorId == dispositivo.Sensor.Id && !t.IsDeleted)
+                .OrderByDescending(t => t.RegistradoEm)
+                .Take(30)
+                .Select(t => new TelemetriaResponseDTO
+                {
+                    Id = t.Id,
+                    SensorId = t.SensorId,
+                    ConsumoKWh = t.ConsumoKWh,
+                    TensaoV = t.TensaoV,
+                    CorrenteA = t.CorrenteA,
+                    RegistradoEm = t.RegistradoEm
+                })
+                .ToListAsync();
+
+            // Reverte para ordem cronológica (antigo -> novo) para plotagem no gráfico
+            telemetrias.Reverse();
+
+            return new ApiResponse<IEnumerable<TelemetriaResponseDTO>>(telemetrias);
         }
     }
 }

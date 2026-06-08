@@ -419,5 +419,38 @@ namespace GreenEnergy.API.Controllers
             }
             return Ok(result);
         }
+
+        /// <summary>
+        /// Obtém o histórico de telemetria/leituras de consumo do dispositivo (últimas 30 leituras).
+        /// </summary>
+        [HttpGet("{id}/telemetria")]
+        [ProducesResponseType(typeof(ApiResponse<IEnumerable<TelemetriaResponseDTO>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<IEnumerable<TelemetriaResponseDTO>>), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiResponse<IEnumerable<TelemetriaResponseDTO>>), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetTelemetria(int id)
+        {
+            var loggedInUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var loggedInUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(loggedInUserIdClaim) || !int.TryParse(loggedInUserIdClaim, out int loggedInUserId) || string.IsNullOrEmpty(loggedInUserRole))
+            {
+                return Unauthorized();
+            }
+
+            var result = await _dispositivoService.ListTelemetriasAsync(id, loggedInUserId, loggedInUserRole);
+            if (!result.Success)
+            {
+                if (result.Message?.Contains("Acesso negado") == true)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, result);
+                }
+                if (result.Message?.Contains("não encontrado") == true)
+                {
+                    return NotFound(result);
+                }
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
     }
 }
