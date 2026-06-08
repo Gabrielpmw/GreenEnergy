@@ -14,11 +14,11 @@ import { DispositivoNovo as ClienteDispositivoNovo } from './pages/cliente/Dispo
 import { DispositivoDetalhe as ClienteDispositivoDetalhe } from './pages/cliente/DispositivoDetalhe'
 import { Tarifas as ClienteTarifas } from './pages/cliente/Tarifas'
 
-const ClienteChamados = () => <div><h3>Meus Chamados</h3><p>Lista de perícias e desativações solicitadas.</p></div>
-const ClienteChamadoNovo = () => <div><h3>Novo Chamado</h3><p>Abertura de chamado técnico de perícia ou remoção.</p></div>
-const ClienteMetas = () => <div><h3>Minhas Metas</h3><p>Limite mensal em kWh ou R$.</p></div>
-const ClienteMetaNova = () => <div><h3>Nova Meta</h3><p>Proposta de limite para consumo de dispositivo.</p></div>
-const ClienteComparativos = () => <div><h3>Comparativos Regionais</h3><p>Consumo médio da rede e eficiência regional.</p></div>
+import { Chamados as ClienteChamados } from './pages/cliente/Chamados'
+import { ChamadoNovo as ClienteChamadoNovo } from './pages/cliente/ChamadoNovo'
+import { Metas as ClienteMetas } from './pages/cliente/Metas'
+import { MetaNova as ClienteMetaNova } from './pages/cliente/MetaNova'
+import { Comparativos as ClienteComparativos } from './pages/cliente/Comparativos'
 
 // Stubs de Páginas do Operador
 const OperadorDashboard = () => <div><h3>Painel de Operações</h3><p>Gerenciamento de chamados técnicos e estoque de sensores.</p></div>
