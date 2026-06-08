@@ -146,9 +146,9 @@ namespace GreenEnergy.Worker.Workers
                     // Corrente = Potência (W) / Tensão (V)
                     double corrente = volts > 0.0 ? Math.Round(wattsSimulado / volts, 2) : 0.0;
 
-                    // Consumo em kWh gerado no intervalo de 45 segundos:
-                    // (Watts * tempo_horas) / 1000 => (Watts * (45 / 3600)) / 1000
-                    double consumoKWh = Math.Round((wattsSimulado * (45.0 / 3600.0)) / 1000.0, 5);
+                    // Para fins de demonstração e facilitação de testes de disparo de alarmes/metas,
+                    // cada ciclo de telemetria simula 10 horas de uso contínuo (multiplicador de 10.0).
+                    double consumoKWh = Math.Round((wattsSimulado * 10.0) / 1000.0, 5);
 
                     // Registrar nova leitura
                     var telemetria = new Telemetria
