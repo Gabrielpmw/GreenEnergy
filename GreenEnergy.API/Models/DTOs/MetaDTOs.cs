@@ -19,6 +19,10 @@ namespace GreenEnergy.API.Models.DTOs
         [Required(ErrorMessage = "A justificativa é obrigatória.")]
         [StringLength(250, MinimumLength = 5, ErrorMessage = "A justificativa deve ter entre 5 e 250 caracteres.")]
         public string Justificativa { get; set; } = string.Empty;
+
+        public DateTime DataInicio { get; set; } = DateTime.UtcNow;
+        public DateTime? DataFim { get; set; }
+        public bool DesligarAoEstourar { get; set; } = false;
     }
 
     public class UpdateMetaRequestDTO
@@ -33,6 +37,10 @@ namespace GreenEnergy.API.Models.DTOs
         [Required(ErrorMessage = "A justificativa é obrigatória.")]
         [StringLength(250, MinimumLength = 5, ErrorMessage = "A justificativa deve ter entre 5 e 250 caracteres.")]
         public string Justificativa { get; set; } = string.Empty;
+
+        public DateTime DataInicio { get; set; }
+        public DateTime? DataFim { get; set; }
+        public bool DesligarAoEstourar { get; set; }
     }
 
     public class AvaliarMetaRequestDTO
@@ -57,5 +65,9 @@ namespace GreenEnergy.API.Models.DTOs
         public string Justificativa { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public string? AvaliacaoObs { get; set; }
+        public DateTime DataInicio { get; set; }
+        public DateTime? DataFim { get; set; }
+        public bool DesligarAoEstourar { get; set; }
+        public bool DispositivoDesligadoPorMeta { get; set; }
     }
 }

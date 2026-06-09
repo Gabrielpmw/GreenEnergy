@@ -12,5 +12,6 @@ namespace GreenEnergy.API.Services
         Task<ApiResponse<MetaResponseDTO>> GetByIdAsync(int id, int userId, string userRole);
         Task<ApiResponse<IEnumerable<MetaResponseDTO>>> ListAllAsync();
         Task<ApiResponse<IEnumerable<MetaResponseDTO>>> ListByDispositivoIdAsync(int dispositivoId, int userId, string userRole);
+        Task<ApiResponse<MetaResponseDTO>> FinalizarMetaAsync(int id, int clienteId);
     }
 }

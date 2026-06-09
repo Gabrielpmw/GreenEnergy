@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Target, HelpCircle, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Target, HelpCircle, AlertTriangle, Calendar, Power } from 'lucide-react'
 import { useToast } from '../../components/ui/Toast'
 import { Spinner } from '../../components/ui/Spinner'
 import api from '../../services/api'
@@ -11,7 +11,6 @@ interface Device {
   potenciaWatts: number
   unidadeConsumidoraId: number
 }
-
 
 export const MetaNova: React.FC = () => {
   const navigate = useNavigate()
@@ -26,6 +25,10 @@ export const MetaNova: React.FC = () => {
   const [tipoMeta, setTipoMeta] = useState('0') // 0 = KWh, 1 = Financeira
   const [valorLimite, setValorLimite] = useState('')
   const [justificativa, setJustificativa] = useState('')
+  const [dataInicio, setDataInicio] = useState(new Date().toISOString().substring(0, 10))
+  const [tempoIndeterminado, setTempoIndeterminado] = useState(true)
+  const [dataFim, setDataFim] = useState('')
+  const [desligarAoEstourar, setDesligarAoEstourar] = useState(false)
   
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -89,6 +92,16 @@ export const MetaNova: React.FC = () => {
       return
     }
 
+    if (!tempoIndeterminado && !dataFim) {
+      setErrorMessage('Por favor, selecione uma data de término para a meta.')
+      return
+    }
+
+    if (!tempoIndeterminado && new Date(dataFim) <= new Date(dataInicio)) {
+      setErrorMessage('A data de término deve ser posterior à data de início.')
+      return
+    }
+
     try {
       setIsSaving(true)
 
@@ -96,7 +109,10 @@ export const MetaNova: React.FC = () => {
         dispositivoId: parseInt(dispositivoId, 10),
         tipoMeta: parseInt(tipoMeta, 10),
         valorLimite: val,
-        justificativa: justificativa.trim()
+        justificativa: justificativa.trim(),
+        dataInicio: new Date(dataInicio).toISOString(),
+        dataFim: tempoIndeterminado ? null : new Date(dataFim).toISOString(),
+        desligarAoEstourar
       }
 
       const res = await api.post('/metas', payload)
@@ -125,10 +141,12 @@ export const MetaNova: React.FC = () => {
 
     const watts = device.potenciaWatts
     let limitKWh = limitNum
+    let limitReais = limitNum * valorTarifa
 
     if (tipoMeta === '1') {
       // Financeira: Converter R$ em kWh baseado na tarifa
       limitKWh = limitNum / valorTarifa
+      limitReais = limitNum
     }
 
     // Horas contínuas = (kWh * 1000) / Watts
@@ -149,6 +167,7 @@ export const MetaNova: React.FC = () => {
 
     return {
       limitKWh: limitKWh.toFixed(2),
+      limitReais: limitReais.toFixed(2),
       totalHours: totalHours.toFixed(1),
       hoursPerDayLabel: formatHoursLabel(hoursPerDay),
       isLowLimit: hoursPerDay < 0.25 // Menos de 15 minutos por dia
@@ -254,6 +273,77 @@ export const MetaNova: React.FC = () => {
               </div>
             </div>
 
+            {/* Configuração de Período da Meta */}
+            <div className="form-card" style={{ marginTop: '24px', backgroundColor: 'var(--white-soft)', border: '1px solid var(--white-dim)' }}>
+              <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: '700', color: 'var(--gray-900)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Calendar size={16} color="var(--green-600)" />
+                Período de Validade
+              </h4>
+
+              <div className="profile-row">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="data-inicio">Data de Início *</label>
+                  <input
+                    id="data-inicio"
+                    type="date"
+                    className="form-input"
+                    value={dataInicio}
+                    onChange={(e) => setDataInicio(e.target.value)}
+                    disabled={isSaving}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="data-fim" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Data de Término</span>
+                    <label style={{ fontSize: '12px', color: 'var(--gray-500)', display: 'inline-flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontWeight: 'normal' }}>
+                      <input
+                        type="checkbox"
+                        checked={tempoIndeterminado}
+                        onChange={(e) => setTempoIndeterminado(e.target.checked)}
+                        disabled={isSaving}
+                        style={{ accentColor: 'var(--green-600)' }}
+                      />
+                      Tempo Indeterminado
+                    </label>
+                  </label>
+                  <input
+                    id="data-fim"
+                    type="date"
+                    className="form-input"
+                    value={dataFim}
+                    onChange={(e) => setDataFim(e.target.value)}
+                    disabled={tempoIndeterminado || isSaving}
+                    required={!tempoIndeterminado}
+                    style={{ opacity: tempoIndeterminado ? 0.5 : 1 }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Ação de Desligamento Automático */}
+            <div className="form-card" style={{ marginTop: '20px', backgroundColor: 'var(--white-soft)', border: '1px solid var(--white-dim)', padding: '16px' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={desligarAoEstourar}
+                  onChange={(e) => setDesligarAoEstourar(e.target.checked)}
+                  disabled={isSaving}
+                  style={{ marginTop: '4px', accentColor: 'var(--green-600)', width: '16px', height: '16px' }}
+                />
+                <div>
+                  <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--gray-900)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Power size={14} color="var(--red-500)" />
+                    Cortar energia automaticamente ao estourar a meta
+                  </span>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12.5px', color: 'var(--gray-500)', lineHeight: '1.4' }}>
+                    Se ativado, o sistema desligará (suspenderá) o fornecimento de energia deste aparelho assim que o consumo acumulado no período ultrapassar o valor limite. O aparelho voltará a funcionar normalmente quando o período da meta terminar ou se você finalizar a meta manualmente.
+                  </p>
+                </div>
+              </label>
+            </div>
+
             {/* Simulador/Estimador Inteligente de Metas */}
             {estimation && currentDevice && (
               <div style={{
@@ -273,13 +363,17 @@ export const MetaNova: React.FC = () => {
                 <p style={{ margin: '0 0 6px 0', lineHeight: '1.4' }}>
                   Para o aparelho <strong>{currentDevice.nome} ({currentDevice.potenciaWatts}W)</strong>, o limite sugerido de{' '}
                   <strong>{valorLimite} {tipoMeta === '0' ? 'kWh' : 'R$'}</strong>{' '}
-                  {tipoMeta === '1' && `(equivalente a aproximadamente ${estimation.limitKWh} kWh com a tarifa de R$ ${valorTarifa.toFixed(2)}/kWh)`}{' '}
                   corresponde a aproximadamente:
                 </p>
                 
                 <ul style={{ margin: '0 0 8px 0', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <li><strong>{estimation.totalHours} horas</strong> de funcionamento contínuo no mês.</li>
                   <li>Um limite de funcionamento médio diário de <strong>{estimation.hoursPerDayLabel}</strong> (durante 30 dias).</li>
+                  {tipoMeta === '0' ? (
+                    <li>Custo financeiro aproximado de <strong>R$ {estimation.limitReais}</strong> (baseado na tarifa de R$ {valorTarifa.toFixed(2)}/kWh).</li>
+                  ) : (
+                    <li>Consumo total equivalente de <strong>{estimation.limitKWh} kWh</strong> (baseado na tarifa de R$ {valorTarifa.toFixed(2)}/kWh).</li>
+                  )}
                 </ul>
 
                 {estimation.isLowLimit && (
@@ -303,7 +397,7 @@ export const MetaNova: React.FC = () => {
             )}
 
             {/* Justificativa */}
-            <div className="form-group" style={{ marginTop: '16px' }}>
+            <div className="form-group" style={{ marginTop: '20px' }}>
               <label className="form-label" htmlFor="justificativa">Justificativa da Proposta *</label>
               <textarea
                 id="justificativa"

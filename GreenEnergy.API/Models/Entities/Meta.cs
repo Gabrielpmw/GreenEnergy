@@ -9,6 +9,11 @@ namespace GreenEnergy.API.Models.Entities
         public string Justificativa { get; set; } = string.Empty;
         public MetaStatus Status { get; set; } = MetaStatus.Proposta;
         public string? AvaliacaoObs { get; set; }
+        
+        public DateTime DataInicio { get; set; } = DateTime.UtcNow;
+        public DateTime? DataFim { get; set; }
+        public bool DesligarAoEstourar { get; set; } = false;
+        public bool DispositivoDesligadoPorMeta { get; set; } = false;
 
         // Propriedades de Navegação
         public virtual Dispositivo Dispositivo { get; set; } = null!;

@@ -131,9 +131,7 @@ namespace GreenEnergy.Worker.Workers
 
         private async Task ProcessarMetasConsumoAsync(ApplicationDbContext db, double valorKWh)
         {
-            var inicioMes = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-
-            // Carregar metas aprovadas
+            // Carregar metas aprovadas e ativas
             var metasAprovadas = await db.Metas
                 .Include(m => m.Dispositivo)
                 .ThenInclude(d => d.UnidadeConsumidora)
@@ -143,32 +141,67 @@ namespace GreenEnergy.Worker.Workers
             foreach (var meta in metasAprovadas)
             {
                 var dispositivo = meta.Dispositivo;
-                if (dispositivo == null || dispositivo.Sensor == null) continue;
+                if (dispositivo == null) continue;
 
-                // Soma do consumo acumulado da telemetria do dispositivo no mês corrente
-                double consumoMensalKWh = await db.Telemetrias
-                    .Where(t => t.SensorId == dispositivo.Sensor.Id && t.RegistradoEm >= inicioMes)
+                // 1. Verificar Expiração do Período
+                if (meta.DataFim.HasValue && DateTime.UtcNow > meta.DataFim.Value)
+                {
+                    _logger.LogInformation("Meta ID {Id} para dispositivo '{Nome}' expirou (Fim: {Fim}). Desativando meta.", meta.Id, dispositivo.Nome, meta.DataFim);
+                    meta.IsActive = false;
+
+                    if (meta.DispositivoDesligadoPorMeta)
+                    {
+                        if (dispositivo.Status == DispositivoStatus.Suspenso)
+                        {
+                            dispositivo.Status = DispositivoStatus.Ativo;
+                            _logger.LogInformation("Restaurando dispositivo '{Nome}' suspenso devido à expiração da meta.", dispositivo.Nome);
+                        }
+                        meta.DispositivoDesligadoPorMeta = false;
+                    }
+                    continue;
+                }
+
+                if (dispositivo.Sensor == null) continue;
+
+                // 2. Calcular consumo no período da meta (DataInicio até Fim ou Agora)
+                var limiteSuperior = meta.DataFim ?? DateTime.UtcNow;
+                double consumoAcumuladoKWh = await db.Telemetrias
+                    .Where(t => t.SensorId == dispositivo.Sensor.Id 
+                             && t.RegistradoEm >= meta.DataInicio 
+                             && t.RegistradoEm <= limiteSuperior)
                     .SumAsync(t => t.ConsumoKWh);
 
                 bool limiteUltrapassado = false;
 
                 if (meta.TipoMeta == TipoMeta.KWh)
                 {
-                    limiteUltrapassado = consumoMensalKWh > meta.ValorLimite;
+                    limiteUltrapassado = consumoAcumuladoKWh > meta.ValorLimite;
                 }
                 else if (meta.TipoMeta == TipoMeta.Financeira)
                 {
-                    double custoMensal = consumoMensalKWh * valorKWh;
-                    limiteUltrapassado = custoMensal > meta.ValorLimite;
+                    double custoAcumulado = consumoAcumuladoKWh * valorKWh;
+                    limiteUltrapassado = custoAcumulado > meta.ValorLimite;
+                }
+
+                // 3. Restaurar se o limite não estiver mais ultrapassado (ex: meta reajustada/aumentada)
+                if (!limiteUltrapassado && meta.DispositivoDesligadoPorMeta)
+                {
+                    if (dispositivo.Status == DispositivoStatus.Suspenso)
+                    {
+                        dispositivo.Status = DispositivoStatus.Ativo;
+                        _logger.LogInformation("Restaurando dispositivo '{Nome}' (limite não está mais excedido).", dispositivo.Nome);
+                    }
+                    meta.DispositivoDesligadoPorMeta = false;
                 }
 
                 if (limiteUltrapassado)
                 {
-                    // Evitar spam de alertas normais de meta: 1 por mês civil
+                    // Evitar spam de alertas de meta: 1 por período
+                    string mensagemMeta = $"Alerta: A meta de consumo de {meta.ValorLimite} {(meta.TipoMeta == TipoMeta.KWh ? "kWh" : "R$")} para o dispositivo '{dispositivo.Nome}' foi ultrapassada.";
                     bool jaAlertadoMeta = await db.Alertas.AnyAsync(a =>
                         a.DispositivoId == dispositivo.Id
                         && a.Tipo == TipoAlerta.Alerta
-                        && a.GeradoEm >= inicioMes
+                        && a.GeradoEm >= meta.DataInicio
                         && a.Mensagem.Contains("meta de consumo"));
 
                     if (!jaAlertadoMeta)
@@ -177,13 +210,35 @@ namespace GreenEnergy.Worker.Workers
                         {
                             UsuarioId = dispositivo.UnidadeConsumidora.UsuarioId,
                             DispositivoId = dispositivo.Id,
-                            Mensagem = $"Alerta: A meta de consumo de {meta.ValorLimite} {(meta.TipoMeta == TipoMeta.KWh ? "kWh" : "R$")} para o dispositivo '{dispositivo.Nome}' foi ultrapassada neste mês.",
+                            Mensagem = mensagemMeta,
                             Tipo = TipoAlerta.Alerta,
                             Lido = false,
                             GeradoEm = DateTime.UtcNow
                         };
                         db.Alertas.Add(alertaMeta);
                         _logger.LogInformation("Alerta de meta ultrapassada gerado para o dispositivo '{Nome}'.", dispositivo.Nome);
+                    }
+
+                    // 4. Executar Desligamento Automático se habilitado
+                    if (meta.DesligarAoEstourar && !meta.DispositivoDesligadoPorMeta)
+                    {
+                        if (dispositivo.Status == DispositivoStatus.Ativo)
+                        {
+                            dispositivo.Status = DispositivoStatus.Suspenso;
+                            meta.DispositivoDesligadoPorMeta = true;
+                            _logger.LogWarning("Meta com desligamento automático atingida! Suspendendo dispositivo '{Nome}'.", dispositivo.Nome);
+
+                            var alertaCorte = new Alerta
+                            {
+                                UsuarioId = dispositivo.UnidadeConsumidora.UsuarioId,
+                                DispositivoId = dispositivo.Id,
+                                Mensagem = $"Aparelho '{dispositivo.Nome}' foi suspenso automaticamente porque ultrapassou o limite estabelecido de {meta.ValorLimite} {(meta.TipoMeta == TipoMeta.KWh ? "kWh" : "R$")}.",
+                                Tipo = TipoAlerta.Critico,
+                                Lido = false,
+                                GeradoEm = DateTime.UtcNow
+                            };
+                            db.Alertas.Add(alertaCorte);
+                        }
                     }
                 }
             }

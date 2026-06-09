@@ -44,7 +44,11 @@ namespace GreenEnergy.API.Services
                 TipoMeta = dto.TipoMeta,
                 ValorLimite = dto.ValorLimite,
                 Justificativa = dto.Justificativa,
-                Status = MetaStatus.Proposta
+                Status = MetaStatus.Proposta,
+                DataInicio = dto.DataInicio,
+                DataFim = dto.DataFim,
+                DesligarAoEstourar = dto.DesligarAoEstourar,
+                DispositivoDesligadoPorMeta = false
             };
 
             await _metaRepository.AddAsync(meta);
@@ -78,6 +82,9 @@ namespace GreenEnergy.API.Services
             meta.TipoMeta = dto.TipoMeta;
             meta.ValorLimite = dto.ValorLimite;
             meta.Justificativa = dto.Justificativa;
+            meta.DataInicio = dto.DataInicio;
+            meta.DataFim = dto.DataFim;
+            meta.DesligarAoEstourar = dto.DesligarAoEstourar;
             meta.Status = MetaStatus.Proposta; // Reseta para Proposta para nova avaliação
 
             await _metaRepository.UpdateAsync(meta);
@@ -170,8 +177,46 @@ namespace GreenEnergy.API.Services
                 ValorLimite = m.ValorLimite,
                 Justificativa = m.Justificativa,
                 Status = m.Status.ToString(),
-                AvaliacaoObs = m.AvaliacaoObs
+                AvaliacaoObs = m.AvaliacaoObs,
+                DataInicio = m.DataInicio,
+                DataFim = m.DataFim,
+                DesligarAoEstourar = m.DesligarAoEstourar,
+                DispositivoDesligadoPorMeta = m.DispositivoDesligadoPorMeta
             };
+        }
+
+        public async Task<ApiResponse<MetaResponseDTO>> FinalizarMetaAsync(int id, int clienteId)
+        {
+            var meta = await _metaRepository.GetByIdAsync(id);
+            if (meta == null)
+            {
+                return new ApiResponse<MetaResponseDTO>("Meta não encontrada.");
+            }
+
+            var dispositivo = await _dispositivoRepository.GetByIdAsync(meta.DispositivoId);
+            var unidade = await _unidadeRepository.GetByIdAsync(dispositivo!.UnidadeConsumidoraId);
+
+            if (unidade == null || unidade.UsuarioId != clienteId)
+            {
+                return new ApiResponse<MetaResponseDTO>("Acesso negado. Você não é o proprietário do dispositivo associado a esta meta.");
+            }
+
+            meta.IsActive = false;
+
+            if (meta.DispositivoDesligadoPorMeta)
+            {
+                if (dispositivo.Status == DispositivoStatus.Suspenso)
+                {
+                    dispositivo.Status = DispositivoStatus.Ativo;
+                    await _dispositivoRepository.UpdateAsync(dispositivo);
+                }
+                meta.DispositivoDesligadoPorMeta = false;
+            }
+
+            await _metaRepository.UpdateAsync(meta);
+
+            var metaCarregada = await _metaRepository.GetByIdAsync(meta.Id);
+            return new ApiResponse<MetaResponseDTO>(MapToResponse(metaCarregada!), "Meta finalizada com sucesso. Consumo normalizado.");
         }
     }
 }

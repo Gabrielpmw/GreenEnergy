@@ -177,5 +177,35 @@ namespace GreenEnergy.API.Controllers
             }
             return Ok(result);
         }
+
+        /// <summary>
+        /// Finaliza uma meta ativa e reativa o dispositivo caso estivesse suspenso por ela. Apenas Clientes.
+        /// </summary>
+        [HttpPost("{id}/finalizar")]
+        [Authorize(Roles = "Cliente")]
+        [ProducesResponseType(typeof(ApiResponse<MetaResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<MetaResponseDTO>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<MetaResponseDTO>), StatusCodes.Status404NotFound)]
+        [ServiceFilter(typeof(AuditLogFilter))]
+        [AuditLog("Finalizar", "Meta")]
+        public async Task<IActionResult> Finalizar(int id)
+        {
+            var loggedInUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(loggedInUserIdClaim) || !int.TryParse(loggedInUserIdClaim, out int loggedInUserId))
+            {
+                return Unauthorized();
+            }
+
+            var result = await _metaService.FinalizarMetaAsync(id, loggedInUserId);
+            if (!result.Success)
+            {
+                if (result.Message?.Contains("não encontrada") == true)
+                {
+                    return NotFound(result);
+                }
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
     }
 }
