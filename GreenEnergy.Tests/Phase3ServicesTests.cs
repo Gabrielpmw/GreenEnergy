@@ -531,13 +531,13 @@ namespace GreenEnergy.Tests
             Assert.Equal(ChamadoStatus.Validado, updatedChamado.Status);
             Assert.Equal(5, updatedChamado.OperadorId);
 
-            // Check device soft delete
+            // Check device remains active and NOT soft-deleted
             var updatedDevice = await _dispositivoRepo.GetByIdAsync(device.Id);
-            Assert.Null(updatedDevice); // GetByIdAsync fake filters out deleted devices
+            Assert.NotNull(updatedDevice); 
 
             var rawDevice = _dispositivoRepo.Dispositivos.First(d => d.Id == device.Id);
-            Assert.False(rawDevice.IsActive);
-            Assert.True(rawDevice.IsDeleted);
+            Assert.True(rawDevice.IsActive);
+            Assert.False(rawDevice.IsDeleted);
 
             // Check sensor decoupled and available
             var updatedSensor = await _sensorRepo.GetByIdAsync(sensor.Id);

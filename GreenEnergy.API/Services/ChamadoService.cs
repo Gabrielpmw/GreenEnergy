@@ -55,7 +55,7 @@ namespace GreenEnergy.API.Services
 
             // Carregar dados adicionais de navegação para a resposta
             var chamadoCarregado = await _chamadoRepository.GetByIdAsync(chamado.Id);
-            var responseDto = MapToResponse(chamadoCarregado!);
+            var responseDto = MapToResponse(chamadoCarregado ?? chamado);
 
             return new ApiResponse<ChamadoResponseDTO>(responseDto, "Chamado aberto com sucesso!");
         }
@@ -106,15 +106,12 @@ namespace GreenEnergy.API.Services
             chamado.Status = dto.Status;
             chamado.OperadorId = requestUserId;
 
-            // Regra de Negócio: Se o chamado for de remoção e for VALIDADO, desativar dispositivo e liberar o sensor físico
+            // Regra de Negócio: Se o chamado for de remoção e for VALIDADO, apenas desvincular o sensor físico (permitindo reutilização) sem desativar/apagar o dispositivo
             if (chamado.Tipo == TipoChamado.Remocao && dto.Status == ChamadoStatus.Validado)
             {
                 var dispositivo = await _dispositivoRepository.GetByIdAsync(chamado.DispositivoId);
                 if (dispositivo != null)
                 {
-                    dispositivo.IsActive = false;
-                    dispositivo.IsDeleted = true;
-
                     if (dispositivo.Sensor != null)
                     {
                         var sensor = dispositivo.Sensor;
@@ -122,8 +119,6 @@ namespace GreenEnergy.API.Services
                         sensor.Status = SensorStatus.Disponivel;
                         await _sensorRepository.UpdateAsync(sensor);
                     }
-
-                    await _dispositivoRepository.UpdateAsync(dispositivo);
                 }
             }
 
@@ -131,7 +126,7 @@ namespace GreenEnergy.API.Services
 
             // Carrega novamente para obter detalhes atualizados do Operador
             var chamadoCarregado = await _chamadoRepository.GetByIdAsync(chamado.Id);
-            var responseDto = MapToResponse(chamadoCarregado!);
+            var responseDto = MapToResponse(chamadoCarregado ?? chamado);
 
             return new ApiResponse<ChamadoResponseDTO>(responseDto, "Status do chamado atualizado com sucesso.");
         }
@@ -181,13 +176,18 @@ namespace GreenEnergy.API.Services
             await _chamadoRepository.UpdateAsync(chamado);
 
             var chamadoCarregado = await _chamadoRepository.GetByIdAsync(chamadoId);
-            var responseDto = MapToResponse(chamadoCarregado!);
+            var responseDto = MapToResponse(chamadoCarregado ?? chamado);
 
             return new ApiResponse<ChamadoResponseDTO>(responseDto, "Chamado provisionado e finalizado com sucesso!");
         }
 
         private ChamadoResponseDTO MapToResponse(Chamado c)
         {
+            if (c == null)
+            {
+                return new ChamadoResponseDTO();
+            }
+
             return new ChamadoResponseDTO
             {
                 Id = c.Id,
