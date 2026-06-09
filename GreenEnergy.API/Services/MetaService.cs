@@ -198,6 +198,11 @@ namespace GreenEnergy.API.Services
 
         private MetaResponseDTO MapToResponse(Meta m)
         {
+            if (m == null)
+            {
+                return new MetaResponseDTO();
+            }
+
             return new MetaResponseDTO
             {
                 Id = m.Id,
@@ -249,7 +254,58 @@ namespace GreenEnergy.API.Services
             await _metaRepository.UpdateAsync(meta);
 
             var metaCarregada = await _metaRepository.GetByIdAsync(meta.Id);
-            return new ApiResponse<MetaResponseDTO>(MapToResponse(metaCarregada!), "Meta finalizada com sucesso. Consumo normalizado.");
+            return new ApiResponse<MetaResponseDTO>(MapToResponse(metaCarregada ?? meta), "Meta finalizada com sucesso. Consumo normalizado.");
+        }
+
+        public async Task<ApiResponse<MetaResponseDTO>> DesativarMetaOperadorAsync(int id, int operadorId)
+        {
+            var meta = await _metaRepository.GetByIdAsync(id);
+            if (meta == null)
+            {
+                return new ApiResponse<MetaResponseDTO>("Meta não encontrada.");
+            }
+
+            meta.IsActive = false;
+            meta.OperadorId = operadorId;
+
+            var dispositivo = await _dispositivoRepository.GetByIdAsync(meta.DispositivoId);
+            if (dispositivo != null)
+            {
+                if (meta.DispositivoDesligadoPorMeta)
+                {
+                    if (dispositivo.Status == DispositivoStatus.Suspenso)
+                    {
+                        dispositivo.Status = DispositivoStatus.Ativo;
+                        await _dispositivoRepository.UpdateAsync(dispositivo);
+                    }
+                    meta.DispositivoDesligadoPorMeta = false;
+                }
+            }
+
+            await _metaRepository.UpdateAsync(meta);
+
+            // Adicionar Alerta para notificar o cliente
+            if (_context != null && dispositivo != null)
+            {
+                var unidade = await _unidadeRepository.GetByIdAsync(dispositivo.UnidadeConsumidoraId);
+                if (unidade != null)
+                {
+                    var alerta = new Alerta
+                    {
+                        UsuarioId = unidade.UsuarioId,
+                        DispositivoId = meta.DispositivoId,
+                        Mensagem = $"Sua meta de consumo #{meta.Id} para o aparelho '{dispositivo.Nome}' foi desativada pelo operador técnico. O fornecimento de energia/status do aparelho foi normalizado.",
+                        Tipo = TipoAlerta.Informativo,
+                        Lido = false,
+                        GeradoEm = DateTime.UtcNow
+                    };
+                    await _context.Alertas.AddAsync(alerta);
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            var metaCarregada = await _metaRepository.GetByIdAsync(meta.Id);
+            return new ApiResponse<MetaResponseDTO>(MapToResponse(metaCarregada ?? meta), "Meta desativada pelo operador com sucesso.");
         }
     }
 }

@@ -217,6 +217,62 @@ namespace GreenEnergy.Tests
             Assert.Contains("Justificativa fraca", alerts[0].Mensagem);
         }
 
+        [Fact]
+        public async Task DesativarMetaOperador_ShouldDeactivateAndRestoreDevice()
+        {
+            // Arrange
+            var db = GetInMemoryDbContext();
+            var metaRepo = new MetaRepository(db);
+            var dispRepo = new DispositivoRepository(db);
+            var ucRepo = new UnidadeConsumidoraRepository(db);
+            var service = new MetaService(metaRepo, dispRepo, ucRepo, db);
+
+            var cliente = new Usuario { Nome = "Cliente", Email = "cli@test.com", Role = UsuarioRole.Cliente, IsActive = true, IsDeleted = false };
+            await db.Usuarios.AddAsync(cliente);
+            await db.SaveChangesAsync();
+
+            var cat = new CategoriaAparelho { Nome = "Iluminação", Descricao = "Lâmpadas", IconeUrl = "light" };
+            await db.CategoriasAparelhos.AddAsync(cat);
+            await db.SaveChangesAsync();
+
+            var uc = new UnidadeConsumidora { Nome = "Unidade", UsuarioId = cliente.Id, CEP = "12345-678", Cidade = "Limeira", Estado = "SP" };
+            await db.UnidadesConsumidoras.AddAsync(uc);
+            await db.SaveChangesAsync();
+
+            var disp = new Dispositivo { Nome = "Aparelho de Teste", UnidadeConsumidoraId = uc.Id, CategoriaId = cat.Id, PotenciaWatts = 500, Status = DispositivoStatus.Suspenso };
+            await db.Dispositivos.AddAsync(disp);
+            await db.SaveChangesAsync();
+
+            var meta = new Meta 
+            { 
+                DispositivoId = disp.Id, 
+                Status = MetaStatus.Aprovada, 
+                ValorLimite = 100.0, 
+                Justificativa = "Test Justification", 
+                IsActive = true,
+                DispositivoDesligadoPorMeta = true
+            };
+            await db.Metas.AddAsync(meta);
+            await db.SaveChangesAsync();
+
+            // Act
+            var result = await service.DesativarMetaOperadorAsync(meta.Id, operadorId: 99);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.False(result.Data!.IsActive);
+            Assert.False(result.Data.DispositivoDesligadoPorMeta);
+
+            var updatedDisp = await db.Dispositivos.FindAsync(disp.Id);
+            Assert.NotNull(updatedDisp);
+            Assert.Equal(DispositivoStatus.Ativo, updatedDisp.Status);
+
+            var alerts = await db.Alertas.ToListAsync();
+            Assert.Single(alerts);
+            Assert.Equal(cliente.Id, alerts[0].UsuarioId);
+            Assert.Contains("desativada pelo operador", alerts[0].Mensagem);
+        }
+
         #endregion
 
         #region CONFIGURACAO API TESTS

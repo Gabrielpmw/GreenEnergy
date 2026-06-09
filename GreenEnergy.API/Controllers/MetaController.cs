@@ -207,5 +207,35 @@ namespace GreenEnergy.API.Controllers
             }
             return Ok(result);
         }
+
+        /// <summary>
+        /// Desativa uma meta ativa e reativa o dispositivo caso estivesse suspenso por ela. Apenas Operadores e Administradores.
+        /// </summary>
+        [HttpPost("{id}/desativar")]
+        [Authorize(Roles = "Admin,Operador")]
+        [ProducesResponseType(typeof(ApiResponse<MetaResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<MetaResponseDTO>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<MetaResponseDTO>), StatusCodes.Status404NotFound)]
+        [ServiceFilter(typeof(AuditLogFilter))]
+        [AuditLog("Desativar", "Meta")]
+        public async Task<IActionResult> Desativar(int id)
+        {
+            var loggedInUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(loggedInUserIdClaim) || !int.TryParse(loggedInUserIdClaim, out int loggedInUserId))
+            {
+                return Unauthorized();
+            }
+
+            var result = await _metaService.DesativarMetaOperadorAsync(id, loggedInUserId);
+            if (!result.Success)
+            {
+                if (result.Message?.Contains("não encontrada") == true)
+                {
+                    return NotFound(result);
+                }
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
     }
 }
