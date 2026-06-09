@@ -42,6 +42,15 @@ export const Clientes: React.FC = () => {
   const [groupedClients, setGroupedClients] = useState<GroupedClient[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [expandedClientIds, setExpandedClientIds] = useState<number[]>([])
+
+  const toggleExpand = (clientId: number) => {
+    setExpandedClientIds((prev) =>
+      prev.includes(clientId)
+        ? prev.filter((id) => id !== clientId)
+        : [...prev, clientId]
+    )
+  }
 
   const fetchClientData = async () => {
     try {
@@ -211,69 +220,123 @@ export const Clientes: React.FC = () => {
                 <th style={{ padding: '16px', color: 'var(--gray-500)', fontWeight: '600' }}>Nome</th>
                 <th style={{ padding: '16px', color: 'var(--gray-500)', fontWeight: '600' }}>CPF</th>
                 <th style={{ padding: '16px', color: 'var(--gray-500)', fontWeight: '600' }}>Telefone</th>
-                <th style={{ padding: '16px', color: 'var(--gray-500)', fontWeight: '600' }}>Unidades Consumidoras</th>
-                <th style={{ padding: '16px', color: 'var(--gray-500)', fontWeight: '600', width: '220px' }}>Ações Rápidas</th>
+                <th style={{ padding: '16px', color: 'var(--gray-500)', fontWeight: '600', width: '180px' }}>Unidades</th>
               </tr>
             </thead>
             <tbody>
-              {filteredClients.map((client) => (
-                <tr key={client.id} style={{ borderBottom: '1px solid var(--white-muted)', transition: 'background-color 0.2s' }} className="table-row-hover">
-                  <td style={{ padding: '16px', fontWeight: '500', color: 'var(--gray-500)' }}>#{client.id}</td>
-                  <td style={{ padding: '16px', fontWeight: '600', color: 'var(--gray-950)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Users size={16} color="var(--green-700)" />
-                      {client.name}
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px', color: 'var(--gray-700)' }}>{formatCPF(client.documento)}</td>
-                  <td style={{ padding: '16px', color: 'var(--gray-700)' }}>{formatTelefone(client.telefone)}</td>
-                  <td style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {client.unidades.map((u) => (
-                        <div key={u.id} style={{ display: 'flex', flexDirection: 'column', padding: '6px', backgroundColor: 'var(--white-soft)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--white-muted)' }}>
-                          <span style={{ fontWeight: '600', color: 'var(--gray-900)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Home size={12} color="var(--green-700)" />
-                            {u.nome}
-                          </span>
-                          <span style={{ fontSize: '11px', color: 'var(--gray-500)', marginTop: '2px' }}>
-                            {u.endereco.cidade}/{u.endereco.uf} — CEP: {u.endereco.cep}
-                          </span>
+              {filteredClients.map((client) => {
+                const isExpanded = expandedClientIds.includes(client.id)
+                return (
+                  <React.Fragment key={client.id}>
+                    <tr style={{ borderBottom: '1px solid var(--white-muted)', transition: 'background-color 0.2s' }} className="table-row-hover">
+                      <td style={{ padding: '16px', fontWeight: '500', color: 'var(--gray-500)' }}>#{client.id}</td>
+                      <td style={{ padding: '16px', fontWeight: '600', color: 'var(--gray-950)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Users size={16} color="var(--green-700)" />
+                          {client.name}
                         </div>
-                      ))}
-                      {client.unidades.length === 0 && (
-                        <span style={{ color: 'var(--gray-400)', fontStyle: 'italic' }}>Nenhuma unidade vinculada</span>
-                      )}
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {client.unidades.map((u) => (
+                      </td>
+                      <td style={{ padding: '16px', color: 'var(--gray-700)' }}>{formatCPF(client.documento)}</td>
+                      <td style={{ padding: '16px', color: 'var(--gray-700)' }}>{formatTelefone(client.telefone)}</td>
+                      <td style={{ padding: '16px' }}>
                         <button
-                          key={u.id}
-                          className="btn-primary"
-                          onClick={() => navigate(`/operador/dispositivos?unidadeId=${u.id}`)}
+                          onClick={() => toggleExpand(client.id)}
+                          className="btn-secondary"
                           style={{
-                            fontSize: '11px',
-                            padding: '6px 10px',
-                            display: 'flex',
+                            padding: '6px 12px',
+                            fontSize: '12px',
+                            display: 'inline-flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '4px',
-                            width: '100%'
+                            gap: '6px',
+                            borderRadius: 'var(--radius-md)',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            transition: 'all 0.2s',
+                            border: '1px solid var(--white-dim)',
+                            backgroundColor: isExpanded ? 'var(--green-50)' : 'var(--white-pure)',
+                            color: isExpanded ? 'var(--green-700)' : 'var(--gray-700)'
                           }}
-                          title={`Ver dispositivos da unidade ${u.nome}`}
                         >
-                          <Cpu size={12} />
-                          Dispositivos: {u.nome}
+                          <Home size={13} color="var(--green-700)" />
+                          {client.unidades.length === 0 ? (
+                            'Sem Unidades'
+                          ) : client.unidades.length === 1 ? (
+                            '1 Unidade'
+                          ) : (
+                            `${client.unidades.length} Unidades`
+                          )}
                         </button>
-                      ))}
-                      {client.unidades.length === 0 && (
-                        <span style={{ color: 'var(--gray-400)', fontSize: '11px' }}>Sem ações disponíveis</span>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr style={{ backgroundColor: 'var(--white-soft)', borderBottom: '1px solid var(--white-muted)' }}>
+                        <td colSpan={5} style={{ padding: '20px 24px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <h4 style={{ margin: 0, fontSize: '13px', fontWeight: '750', color: 'var(--gray-800)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <Home size={15} color="var(--green-700)" />
+                              Endereços e Ações de Dispositivos — {client.name}
+                            </h4>
+                            {client.unidades.length === 0 ? (
+                              <span style={{ fontSize: '12px', color: 'var(--gray-400)', fontStyle: 'italic' }}>
+                                Nenhuma unidade de consumo cadastrada para este cliente.
+                              </span>
+                            ) : (
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+                                {client.unidades.map((u) => (
+                                  <div
+                                    key={u.id}
+                                    style={{
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      justifyContent: 'space-between',
+                                      padding: '16px',
+                                      backgroundColor: 'var(--white-pure)',
+                                      borderRadius: 'var(--radius-md)',
+                                      border: '1px solid var(--white-muted)',
+                                      boxShadow: 'var(--shadow-sm)',
+                                      gap: '12px'
+                                    }}
+                                  >
+                                    <div>
+                                      <span style={{ fontWeight: '700', color: 'var(--gray-900)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13.5px' }}>
+                                        {u.nome}
+                                        <span style={{ fontSize: '10.5px', fontWeight: '500', padding: '2px 6px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--white-soft)', color: 'var(--gray-500)', border: '1px solid var(--white-muted)' }}>
+                                          {u.tipoImovel}
+                                        </span>
+                                      </span>
+                                      <span style={{ fontSize: '12px', color: 'var(--gray-500)', display: 'block', marginTop: '6px', lineHeight: '1.4' }}>
+                                        {u.endereco.logradouro}, {u.endereco.numero} {u.endereco.complemento ? `(${u.endereco.complemento})` : ''} <br />
+                                        {u.endereco.bairro} — {u.endereco.cidade}/{u.endereco.uf} — CEP: {u.endereco.cep}
+                                      </span>
+                                    </div>
+                                    <button
+                                      className="btn-primary"
+                                      onClick={() => navigate(`/operador/dispositivos?unidadeId=${u.id}`)}
+                                      style={{
+                                        fontSize: '12px',
+                                        padding: '8px 12px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px',
+                                        cursor: 'pointer',
+                                        marginTop: '4px'
+                                      }}
+                                    >
+                                      <Cpu size={13} />
+                                      Ver Dispositivos
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                )
+              })}
             </tbody>
           </table>
         </div>

@@ -69,5 +69,6 @@ namespace GreenEnergy.API.Models.DTOs
         public DateTime? DataFim { get; set; }
         public bool DesligarAoEstourar { get; set; }
         public bool DispositivoDesligadoPorMeta { get; set; }
+        public bool IsActive { get; set; }
     }
 }

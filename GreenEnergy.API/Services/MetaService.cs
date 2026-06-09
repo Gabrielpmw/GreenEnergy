@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GreenEnergy.API.Data;
 using GreenEnergy.API.Models.DTOs;
 using GreenEnergy.API.Models.Entities;
 using GreenEnergy.API.Repositories;
@@ -13,15 +14,18 @@ namespace GreenEnergy.API.Services
         private readonly IMetaRepository _metaRepository;
         private readonly IDispositivoRepository _dispositivoRepository;
         private readonly IUnidadeConsumidoraRepository _unidadeRepository;
+        private readonly ApplicationDbContext? _context;
 
         public MetaService(
             IMetaRepository metaRepository,
             IDispositivoRepository dispositivoRepository,
-            IUnidadeConsumidoraRepository unidadeRepository)
+            IUnidadeConsumidoraRepository unidadeRepository,
+            ApplicationDbContext? context = null)
         {
             _metaRepository = metaRepository;
             _dispositivoRepository = dispositivoRepository;
             _unidadeRepository = unidadeRepository;
+            _context = context;
         }
 
         public async Task<ApiResponse<MetaResponseDTO>> ProporMetaAsync(CreateMetaRequestDTO dto, int clienteId)
@@ -112,6 +116,34 @@ namespace GreenEnergy.API.Services
 
             await _metaRepository.UpdateAsync(meta);
 
+            // Notificar cliente sobre a avaliação da meta
+            if (_context != null)
+            {
+                var dispositivo = await _dispositivoRepository.GetByIdAsync(meta.DispositivoId);
+                if (dispositivo != null)
+                {
+                    var unidade = await _unidadeRepository.GetByIdAsync(dispositivo.UnidadeConsumidoraId);
+                    if (unidade != null)
+                    {
+                        var statusStr = meta.Status == MetaStatus.Aprovada ? "aprovada" : "devolvida";
+                        var statusLabel = meta.Status == MetaStatus.Aprovada ? "Aprovada" : "Devolvida";
+                        
+                        var alerta = new Alerta
+                        {
+                            UsuarioId = unidade.UsuarioId,
+                            DispositivoId = meta.DispositivoId,
+                            Mensagem = $"Sua meta de consumo #{meta.Id} para o aparelho '{dispositivo.Nome}' foi {statusStr} pelo operador técnico. Status: {statusLabel}. Observações: {meta.AvaliacaoObs}",
+                            Tipo = TipoAlerta.Informativo,
+                            Lido = false,
+                            GeradoEm = DateTime.UtcNow
+                        };
+
+                        await _context.Alertas.AddAsync(alerta);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
             var metaCarregada = await _metaRepository.GetByIdAsync(meta.Id);
             return new ApiResponse<MetaResponseDTO>(MapToResponse(metaCarregada!), "Meta avaliada com sucesso.");
         }
@@ -181,7 +213,8 @@ namespace GreenEnergy.API.Services
                 DataInicio = m.DataInicio,
                 DataFim = m.DataFim,
                 DesligarAoEstourar = m.DesligarAoEstourar,
-                DispositivoDesligadoPorMeta = m.DispositivoDesligadoPorMeta
+                DispositivoDesligadoPorMeta = m.DispositivoDesligadoPorMeta,
+                IsActive = m.IsActive
             };
         }
 
