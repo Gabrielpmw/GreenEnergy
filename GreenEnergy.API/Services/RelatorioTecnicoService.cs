@@ -141,13 +141,23 @@ namespace GreenEnergy.API.Services
             return new ApiResponse<RelatorioTecnicoResponseDTO>(MapToResponse(relatorioCarregado!), "Relatório técnico criado com sucesso!");
         }
 
-        public async Task<ApiResponse<RelatorioTecnicoResponseDTO>> GetByIdAsync(int id)
+        public async Task<ApiResponse<RelatorioTecnicoResponseDTO>> GetByIdAsync(int id, int requestUserId, string requestUserRole)
         {
             var relatorio = await _relatorioRepository.GetByIdAsync(id);
             if (relatorio == null)
             {
                 return new ApiResponse<RelatorioTecnicoResponseDTO>("Relatório técnico não encontrado.");
             }
+
+            if (requestUserRole == "Cliente")
+            {
+                var chamado = await _chamadoRepository.GetByIdAsync(relatorio.ChamadoId);
+                if (chamado == null || chamado.ClienteId != requestUserId)
+                {
+                    return new ApiResponse<RelatorioTecnicoResponseDTO>("Acesso negado. Você não possui permissão para visualizar este relatório técnico.");
+                }
+            }
+
             return new ApiResponse<RelatorioTecnicoResponseDTO>(MapToResponse(relatorio));
         }
 
@@ -157,7 +167,7 @@ namespace GreenEnergy.API.Services
             return new ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>(relatorios.Select(MapToResponse));
         }
 
-        public async Task<ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>> ListByChamadoIdAsync(int chamadoId)
+        public async Task<ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>> ListByChamadoIdAsync(int chamadoId, int requestUserId, string requestUserRole)
         {
             var chamado = await _chamadoRepository.GetByIdAsync(chamadoId);
             if (chamado == null)
@@ -165,12 +175,32 @@ namespace GreenEnergy.API.Services
                 return new ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>("Chamado correspondente não encontrado.");
             }
 
+            if (requestUserRole == "Cliente" && chamado.ClienteId != requestUserId)
+            {
+                return new ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>("Acesso negado. Você não possui permissão para visualizar este chamado.");
+            }
+
             var relatorios = await _relatorioRepository.ListByChamadoIdAsync(chamadoId);
             return new ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>(relatorios.Select(MapToResponse));
         }
 
-        public async Task<ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>> ListByDispositivoIdAsync(int dispositivoId)
+        public async Task<ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>> ListByDispositivoIdAsync(int dispositivoId, int requestUserId, string requestUserRole)
         {
+            var dispositivo = await _dispositivoRepository.GetByIdAsync(dispositivoId);
+            if (dispositivo == null)
+            {
+                return new ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>("Dispositivo correspondente não encontrado.");
+            }
+
+            if (requestUserRole == "Cliente")
+            {
+                var uc = await _unidadeRepository.GetByIdAsync(dispositivo.UnidadeConsumidoraId);
+                if (uc == null || uc.UsuarioId != requestUserId)
+                {
+                    return new ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>("Acesso negado. Você não possui permissão para visualizar os laudos deste dispositivo.");
+                }
+            }
+
             var relatorios = await _relatorioRepository.ListAllAsync();
             var filtrados = relatorios.Where(r => r.Chamado != null && r.Chamado.DispositivoId == dispositivoId);
             return new ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>(filtrados.Select(MapToResponse));

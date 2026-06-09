@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   ArrowLeft, Cpu, Zap, Calendar, Shield, AlertTriangle, 
-  MessageSquare, Edit3, Trash2, Plus, Check, X, Target
+  MessageSquare, Edit3, Trash2, Plus, Check, X, Target, FileText
 } from 'lucide-react'
 import { Spinner } from '../../components/ui/Spinner'
 import { useToast } from '../../components/ui/Toast'
@@ -67,6 +67,16 @@ interface Goal {
   observacoesOperador?: string
 }
 
+interface Relatorio {
+  id: number
+  chamadoId: number
+  operadorNome: string
+  descricao: string
+  solucaoRecomendada: string
+  tipoOcorrencia: string
+  criadoEm: string
+}
+
 interface ActiveTariff {
   id: number
   valorKWh: number
@@ -82,6 +92,8 @@ export const DispositivoDetalhe: React.FC = () => {
   const [telemetries, setTelemetries] = useState<Telemetry[]>([])
   const [annotations, setAnnotations] = useState<Annotation[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
+  const [relatorios, setRelatorios] = useState<Relatorio[]>([])
+  const [isRelatoriosLoading, setIsRelatoriosLoading] = useState(false)
   const [activeTariff, setActiveTariff] = useState<ActiveTariff | null>(null)
 
   const [isLoading, setIsLoading] = useState(true)
@@ -152,6 +164,19 @@ export const DispositivoDetalhe: React.FC = () => {
         console.error('Erro ao buscar tarifa ativa:', tariffErr)
       }
 
+      // 6. Laudos Técnicos
+      try {
+        setIsRelatoriosLoading(true)
+        const relatoriosRes = await api.get(`/relatorios/dispositivo/${id}`)
+        if (relatoriosRes.data.success) {
+          setRelatorios(relatoriosRes.data.data || [])
+        }
+      } catch (relatoriosErr) {
+        console.error('Erro ao buscar relatórios técnicos:', relatoriosErr)
+      } finally {
+        setIsRelatoriosLoading(false)
+      }
+
     } catch (err: any) {
       console.error('Erro geral ao buscar detalhes do dispositivo:', err)
       setErrorMsg(err.response?.data?.message || 'Erro de comunicação com o servidor.')
@@ -186,6 +211,15 @@ export const DispositivoDetalhe: React.FC = () => {
       return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     } catch {
       return dateStr
+    }
+  }
+
+  const getOcorrenciaLabel = (ocorrenciaStr: string) => {
+    switch (ocorrenciaStr) {
+      case 'FalhaSensor': return 'Falha do Sensor'
+      case 'ExcessoConsumo': return 'Excesso de Consumo'
+      case 'ManutencaoRecomendada': return 'Manutenção Recomendada'
+      default: return ocorrenciaStr
     }
   }
 
@@ -460,6 +494,75 @@ export const DispositivoDetalhe: React.FC = () => {
                     {telemetries.length} / 30
                   </span>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Seção de Laudos Técnicos */}
+          <div className="profile-card" style={{ padding: '24px' }}>
+            <h2 className="profile-section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', margin: 0 }}>
+              <FileText size={20} color="var(--green-700)" />
+              Histórico de Laudos Técnicos
+            </h2>
+            <p className="profile-section-subtitle" style={{ marginTop: '8px', marginBottom: '16px' }}>
+              Consulte os laudos e pareceres técnicos emitidos pelos operadores para este dispositivo.
+            </p>
+
+            {isRelatoriosLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '24px' }}>
+                <Spinner size="sm" />
+              </div>
+            ) : relatorios.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '24px',
+                color: 'var(--gray-500)',
+                border: '1px dashed var(--white-dim)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '13.5px'
+              }}>
+                Nenhum laudo técnico cadastrado para este dispositivo.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {relatorios.map((r) => (
+                  <div key={r.id} style={{
+                    padding: '16px',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--white-muted)',
+                    backgroundColor: 'var(--white-soft)'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                      <div>
+                        <strong style={{ fontSize: '14px', color: 'var(--gray-900)' }}>Laudo #{r.id}</strong>
+                        {r.chamadoId && (
+                          <div style={{ fontSize: '11px', color: 'var(--gray-500)', marginTop: '2px' }}>
+                            Vinculado ao chamado #{r.chamadoId}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'right', fontSize: '11px', color: 'var(--gray-500)' }}>
+                        <div>Técnico: {r.operadorNome}</div>
+                        <div style={{ marginTop: '2px' }}>{formatDateTime(r.criadoEm)}</div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: 'var(--gray-900)' }}>
+                      <div>
+                        <span style={{ fontWeight: '600', color: 'var(--gray-500)' }}>Tipo de Ocorrência: </span>
+                        <span style={{ fontWeight: '600', color: 'var(--green-700)' }}>{getOcorrenciaLabel(r.tipoOcorrencia)}</span>
+                      </div>
+                      <div>
+                        <span style={{ fontWeight: '600', color: 'var(--gray-500)' }}>Descrição do Problema: </span>
+                        <span>{r.descricao}</span>
+                      </div>
+                      <div>
+                        <span style={{ fontWeight: '600', color: 'var(--gray-500)' }}>Solução Recomendada: </span>
+                        <span>{r.solucaoRecomendada}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

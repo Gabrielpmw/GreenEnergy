@@ -13,7 +13,7 @@ namespace GreenEnergy.API.Controllers
     [ApiController]
     [Route("api/v1/relatorios")]
     [Produces("application/json")]
-    [Authorize(Roles = "Admin,Operador")]
+    [Authorize(Roles = "Admin,Operador,Cliente")]
     public class RelatorioTecnicoController : ControllerBase
     {
         private readonly IRelatorioTecnicoService _relatorioService;
@@ -53,12 +53,25 @@ namespace GreenEnergy.API.Controllers
         /// </summary>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ApiResponse<RelatorioTecnicoResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<RelatorioTecnicoResponseDTO>), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiResponse<RelatorioTecnicoResponseDTO>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
         {
-            var result = await _relatorioService.GetByIdAsync(id);
+            var loggedInUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var loggedInUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(loggedInUserIdClaim) || !int.TryParse(loggedInUserIdClaim, out int loggedInUserId) || string.IsNullOrEmpty(loggedInUserRole))
+            {
+                return Unauthorized();
+            }
+
+            var result = await _relatorioService.GetByIdAsync(id, loggedInUserId, loggedInUserRole);
             if (!result.Success)
             {
+                if (result.Message?.Contains("Acesso negado") == true)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, result);
+                }
                 return NotFound(result);
             }
             return Ok(result);
@@ -68,6 +81,7 @@ namespace GreenEnergy.API.Controllers
         /// Lista todos os relatórios técnicos. Apenas Administradores e Operadores.
         /// </summary>
         [HttpGet]
+        [Authorize(Roles = "Admin,Operador")]
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
         {
@@ -76,29 +90,59 @@ namespace GreenEnergy.API.Controllers
         }
 
         /// <summary>
-        /// Lista todos os relatórios técnicos associados a um chamado específico. Apenas Administradores e Operadores.
+        /// Lista todos os relatórios técnicos associados a um chamado específico.
         /// </summary>
         [HttpGet("chamado/{id}")]
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetByChamado(int id)
         {
-            var result = await _relatorioService.ListByChamadoIdAsync(id);
+            var loggedInUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var loggedInUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(loggedInUserIdClaim) || !int.TryParse(loggedInUserIdClaim, out int loggedInUserId) || string.IsNullOrEmpty(loggedInUserRole))
+            {
+                return Unauthorized();
+            }
+
+            var result = await _relatorioService.ListByChamadoIdAsync(id, loggedInUserId, loggedInUserRole);
             if (!result.Success)
             {
+                if (result.Message?.Contains("Acesso negado") == true)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, result);
+                }
                 return NotFound(result);
             }
             return Ok(result);
         }
 
         /// <summary>
-        /// Lista todos os relatórios técnicos associados a um dispositivo específico. Apenas Administradores e Operadores.
+        /// Lista todos os relatórios técnicos associados a um dispositivo específico.
         /// </summary>
         [HttpGet("dispositivo/{id}")]
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<IEnumerable<RelatorioTecnicoResponseDTO>>), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetByDispositivo(int id)
         {
-            var result = await _relatorioService.ListByDispositivoIdAsync(id);
+            var loggedInUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var loggedInUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(loggedInUserIdClaim) || !int.TryParse(loggedInUserIdClaim, out int loggedInUserId) || string.IsNullOrEmpty(loggedInUserRole))
+            {
+                return Unauthorized();
+            }
+
+            var result = await _relatorioService.ListByDispositivoIdAsync(id, loggedInUserId, loggedInUserRole);
+            if (!result.Success)
+            {
+                if (result.Message?.Contains("Acesso negado") == true)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, result);
+                }
+                return BadRequest(result);
+            }
             return Ok(result);
         }
     }
