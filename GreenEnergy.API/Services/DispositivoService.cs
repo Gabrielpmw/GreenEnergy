@@ -363,7 +363,8 @@ namespace GreenEnergy.API.Services
                     ModeloSensor = d.Sensor.ModeloSensor,
                     NumeroSerie = d.Sensor.NumeroSerie,
                     Status = d.Sensor.Status.ToString(),
-                    UltimoSinal = d.Sensor.UltimoSinal
+                    UltimoSinal = d.Sensor.UltimoSinal,
+                    Observacao = d.Sensor.Observacao
                 } : null
             };
         }

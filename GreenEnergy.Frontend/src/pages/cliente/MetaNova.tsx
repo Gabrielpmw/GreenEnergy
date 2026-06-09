@@ -4,6 +4,7 @@ import { ArrowLeft, Target, HelpCircle, AlertTriangle, Calendar, Power } from 'l
 import { useToast } from '../../components/ui/Toast'
 import { Spinner } from '../../components/ui/Spinner'
 import api from '../../services/api'
+import { formatNumber } from '../../utils/format'
 
 interface Device {
   id: number
@@ -166,9 +167,9 @@ export const MetaNova: React.FC = () => {
     }
 
     return {
-      limitKWh: limitKWh.toFixed(2),
-      limitReais: limitReais.toFixed(2),
-      totalHours: totalHours.toFixed(1),
+      limitKWh: formatNumber(limitKWh, 2),
+      limitReais: formatNumber(limitReais, 2),
+      totalHours: formatNumber(totalHours, 1),
       hoursPerDayLabel: formatHoursLabel(hoursPerDay),
       isLowLimit: hoursPerDay < 0.25 // Menos de 15 minutos por dia
     }
@@ -370,9 +371,9 @@ export const MetaNova: React.FC = () => {
                   <li><strong>{estimation.totalHours} horas</strong> de funcionamento contínuo no mês.</li>
                   <li>Um limite de funcionamento médio diário de <strong>{estimation.hoursPerDayLabel}</strong> (durante 30 dias).</li>
                   {tipoMeta === '0' ? (
-                    <li>Custo financeiro aproximado de <strong>R$ {estimation.limitReais}</strong> (baseado na tarifa de R$ {valorTarifa.toFixed(2)}/kWh).</li>
+                    <li>Custo financeiro aproximado de <strong>R$ {estimation.limitReais}</strong> (baseado na tarifa de R$ {formatNumber(valorTarifa, 2)}/kWh).</li>
                   ) : (
-                    <li>Consumo total equivalente de <strong>{estimation.limitKWh} kWh</strong> (baseado na tarifa de R$ {valorTarifa.toFixed(2)}/kWh).</li>
+                    <li>Consumo total equivalente de <strong>{estimation.limitKWh} kWh</strong> (baseado na tarifa de R$ {formatNumber(valorTarifa, 2)}/kWh).</li>
                   )}
                 </ul>
 

@@ -6,7 +6,8 @@ namespace GreenEnergy.API.Models.Entities
     {
         public int ChamadoId { get; set; }
         public int OperadorId { get; set; }
-        public string Conteudo { get; set; } = string.Empty;
+        public string Descricao { get; set; } = string.Empty;
+        public string SolucaoRecomendada { get; set; } = string.Empty;
         public TipoOcorrencia TipoOcorrencia { get; set; }
         public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 

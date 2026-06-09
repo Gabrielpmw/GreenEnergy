@@ -331,7 +331,8 @@ namespace GreenEnergy.Tests
             var dto = new CreateRelatorioTecnicoRequestDTO
             {
                 ChamadoId = chamado.Id,
-                Conteudo = "Identificado sensor danificado por descarga elétrica. Substituído por modelo idêntico.",
+                Descricao = "Identificado sensor danificado por descarga elétrica.",
+                SolucaoRecomendada = "Substituído por modelo idêntico.",
                 TipoOcorrencia = TipoOcorrencia.FalhaSensor
             };
 
@@ -344,7 +345,7 @@ namespace GreenEnergy.Tests
             Assert.Equal(chamado.Id, response.Data.ChamadoId);
             Assert.Equal(5, response.Data.OperadorId);
             Assert.Equal("FalhaSensor", response.Data.TipoOcorrencia);
-            Assert.Contains("descarga elétrica", response.Data.Conteudo);
+            Assert.Contains("descarga elétrica", response.Data.Descricao);
         }
 
         // --- TESTES DE CONTROLE REMOTO ---

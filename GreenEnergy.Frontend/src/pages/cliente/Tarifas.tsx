@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Zap, Calendar, TrendingUp, AlertCircle } from 'lucide-react'
 import { Spinner } from '../../components/ui/Spinner'
 import api from '../../services/api'
+import { formatNumber } from '../../utils/format'
 
 interface Tariff {
   id: number
@@ -141,7 +142,7 @@ export const Tarifas: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
               <span style={{ fontSize: '24px', fontWeight: '400', color: 'var(--gray-500)' }}>R$</span>
               <span style={{ fontSize: '48px', fontWeight: '800', color: 'var(--gray-900)', lineHeight: 1 }}>
-                {activeTariff.valorKWh.toFixed(4)}
+                {formatNumber(activeTariff.valorKWh, 4)}
               </span>
               <span style={{ fontSize: '16px', color: 'var(--gray-500)', fontWeight: '500', marginLeft: '4px' }}>/ kWh</span>
             </div>
@@ -219,7 +220,7 @@ export const Tarifas: React.FC = () => {
                       </span>
                     </td>
                     <td style={{ padding: '12px 16px', fontWeight: '700', color: 'var(--gray-900)' }}>
-                      R$ {t.valorKWh.toFixed(4)}
+                      R$ {formatNumber(t.valorKWh, 4)}
                     </td>
                     <td style={{ padding: '12px 16px', color: 'var(--gray-500)', fontSize: '13px' }}>
                       {formatDate(t.vigenciaInicio)}

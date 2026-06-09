@@ -5,6 +5,7 @@ import api from '../../services/api'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Home, Cpu, DollarSign, CloudSun, Leaf } from 'lucide-react'
+import { formatNumber } from '../../utils/format'
 
 interface Unit {
   id: number
@@ -155,7 +156,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               </div>
               <div className="kpi-value">
-                {tariff ? `R$ ${tariff.valorKWh.toFixed(2)}` : 'N/A'}
+                {tariff ? `R$ ${formatNumber(tariff.valorKWh, 4)}` : 'N/A'}
               </div>
               <div className="kpi-footer" style={{ fontWeight: '600' }}>
                 {tariff ? `Bandeira ${tariff.bandeira}` : 'Sem tarifa ativa cadastrada'}

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GreenEnergy.API.Data;
 using GreenEnergy.API.Models.DTOs;
 using GreenEnergy.API.Models.Entities;
 using GreenEnergy.API.Repositories;
@@ -14,17 +15,20 @@ namespace GreenEnergy.API.Services
         private readonly IChamadoRepository _chamadoRepository;
         private readonly IDispositivoRepository _dispositivoRepository;
         private readonly IUnidadeConsumidoraRepository _unidadeRepository;
+        private readonly ApplicationDbContext? _context;
 
         public RelatorioTecnicoService(
             IRelatorioTecnicoRepository relatorioRepository,
             IChamadoRepository chamadoRepository,
             IDispositivoRepository dispositivoRepository,
-            IUnidadeConsumidoraRepository unidadeRepository)
+            IUnidadeConsumidoraRepository unidadeRepository,
+            ApplicationDbContext? context = null)
         {
             _relatorioRepository = relatorioRepository;
             _chamadoRepository = chamadoRepository;
             _dispositivoRepository = dispositivoRepository;
             _unidadeRepository = unidadeRepository;
+            _context = context;
         }
 
         public async Task<ApiResponse<RelatorioTecnicoResponseDTO>> CreateRelatorioAsync(CreateRelatorioTecnicoRequestDTO dto, int operadorId)
@@ -98,12 +102,39 @@ namespace GreenEnergy.API.Services
             {
                 ChamadoId = chamadoId,
                 OperadorId = operadorId,
-                Conteudo = dto.Conteudo,
+                Descricao = dto.Descricao,
+                SolucaoRecomendada = dto.SolucaoRecomendada,
                 TipoOcorrencia = dto.TipoOcorrencia,
                 CriadoEm = DateTime.UtcNow
             };
 
             await _relatorioRepository.AddAsync(relatorio);
+
+            // Buscar chamado completo para obter dados de cliente e dispositivo para disparar o Alerta
+            var chamadoFinal = await _chamadoRepository.GetByIdAsync(chamadoId);
+            if (chamadoFinal != null && _context != null)
+            {
+                var nomeDispositivo = chamadoFinal.Dispositivo?.Nome ?? "Dispositivo";
+                string ocorrenciaFormatada = dto.TipoOcorrencia switch
+                {
+                    TipoOcorrencia.FalhaSensor => "Falha do Sensor",
+                    TipoOcorrencia.ExcessoConsumo => "Excesso de Consumo",
+                    _ => "Manutenção Recomendada"
+                };
+
+                var alerta = new Alerta
+                {
+                    UsuarioId = chamadoFinal.ClienteId,
+                    DispositivoId = chamadoFinal.DispositivoId,
+                    Mensagem = $"Novo laudo técnico emitido para o dispositivo '{nomeDispositivo}'. Ocorrência: {ocorrenciaFormatada}. Problema: {dto.Descricao}. Solução recomendada: {dto.SolucaoRecomendada}.",
+                    Tipo = TipoAlerta.Informativo,
+                    Lido = false,
+                    GeradoEm = DateTime.UtcNow
+                };
+
+                await _context.Alertas.AddAsync(alerta);
+                await _context.SaveChangesAsync();
+            }
 
             // Recarregar relatorio para obter dados de navegação do operador
             var relatorioCarregado = await _relatorioRepository.GetByIdAsync(relatorio.Id);
@@ -155,7 +186,8 @@ namespace GreenEnergy.API.Services
                 DispositivoNome = r.Chamado != null && r.Chamado.Dispositivo != null ? r.Chamado.Dispositivo.Nome : string.Empty,
                 OperadorId = r.OperadorId,
                 OperadorNome = r.Operador != null ? r.Operador.Nome : string.Empty,
-                Conteudo = r.Conteudo,
+                Descricao = r.Descricao,
+                SolucaoRecomendada = r.SolucaoRecomendada,
                 TipoOcorrencia = r.TipoOcorrencia.ToString(),
                 CriadoEm = r.CriadoEm
             };

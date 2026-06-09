@@ -210,7 +210,9 @@ namespace GreenEnergy.API.Services
                 Email = usuario.Email,
                 Role = usuario.Role.ToString(),
                 IsActive = usuario.IsActive,
-                CriadoEm = usuario.CriadoEm
+                CriadoEm = usuario.CriadoEm,
+                Documento = usuario.Perfil?.Documento,
+                Telefone = usuario.Perfil?.Telefone
             };
         }
 

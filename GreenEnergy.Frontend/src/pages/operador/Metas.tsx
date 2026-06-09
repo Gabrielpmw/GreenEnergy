@@ -5,6 +5,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import { useToast } from '../../components/ui/Toast'
 import api from '../../services/api'
+import { formatNumber, formatCurrency } from '../../utils/format'
 
 interface Meta {
   id: number
@@ -177,7 +178,7 @@ export const Metas: React.FC = () => {
                     <div>
                       <span style={{ color: 'var(--gray-500)' }}>Limite Solicitado:</span>{' '}
                       <strong style={{ color: 'var(--gray-900)' }}>
-                        {m.valorLimite} {m.tipoMeta === 'KWh' ? 'kWh' : 'R$'}
+                        {m.tipoMeta === 'KWh' ? `${formatNumber(m.valorLimite, 2)} kWh` : formatCurrency(m.valorLimite)}
                       </strong>
                     </div>
 

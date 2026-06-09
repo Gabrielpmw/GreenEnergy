@@ -7,6 +7,7 @@ import { ErrorBoundary } from '../../components/ErrorBoundary'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import { useToast } from '../../components/ui/Toast'
 import api from '../../services/api'
+import { formatNumber, formatDate } from '../../utils/format'
 
 // Recharts imports
 import {
@@ -20,6 +21,7 @@ interface SensorResponse {
   numeroSerie: string
   status: string
   ultimoSinal?: string
+  observacao?: string
 }
 
 interface Device {
@@ -51,8 +53,8 @@ interface Relatorio {
   dispositivoId?: number
   dispositivoNome?: string
   descricao: string
-  diagnostico: string
   solucaoRecomendada: string
+  tipoOcorrencia: string
   criadoEm: string
   operadorNome: string
 }
@@ -75,8 +77,8 @@ export const DispositivoDetalhe: React.FC = () => {
 
   // Modal de Criação de Laudo
   const [isLaudoModalOpen, setIsLaudoModalOpen] = useState(false)
+  const [tipoOcorrencia, setTipoOcorrencia] = useState<number>(0)
   const [laudoDescricao, setLaudoDescricao] = useState('')
-  const [laudoDiagnostico, setLaudoDiagnostico] = useState('')
   const [laudoSolucao, setLaudoSolucao] = useState('')
   const [isLaudoSubmitting, setIsLaudoSubmitting] = useState(false)
 
@@ -166,8 +168,8 @@ export const DispositivoDetalhe: React.FC = () => {
     e.preventDefault()
     if (!id) return
 
-    if (!laudoDescricao.trim() || !laudoDiagnostico.trim() || !laudoSolucao.trim()) {
-      addToast('Por favor, preencha todos os campos do laudo.', 'warning')
+    if (!laudoDescricao.trim() || !laudoSolucao.trim()) {
+      addToast('Por favor, preencha todos os campos obrigatórios do laudo.', 'warning')
       return
     }
 
@@ -175,8 +177,8 @@ export const DispositivoDetalhe: React.FC = () => {
       setIsLaudoSubmitting(true)
       const payload = {
         dispositivoId: parseInt(id, 10),
+        tipoOcorrencia: tipoOcorrencia,
         descricao: laudoDescricao.trim(),
-        diagnostico: laudoDiagnostico.trim(),
         solucaoRecomendada: laudoSolucao.trim()
       }
 
@@ -185,8 +187,8 @@ export const DispositivoDetalhe: React.FC = () => {
         addToast('Laudo Técnico criado com sucesso!', 'success')
         setIsLaudoModalOpen(false)
         setLaudoDescricao('')
-        setLaudoDiagnostico('')
         setLaudoSolucao('')
+        setTipoOcorrencia(0)
         // Recarregar os relatórios e os dados do dispositivo
         fetchDeviceData()
       } else {
@@ -198,21 +200,6 @@ export const DispositivoDetalhe: React.FC = () => {
       addToast(msg, 'error')
     } finally {
       setIsLaudoSubmitting(false)
-    }
-  }
-
-  const formatDateTime = (dateStr: string) => {
-    try {
-      const date = new Date(dateStr)
-      return date.toLocaleString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    } catch {
-      return dateStr
     }
   }
 
@@ -232,6 +219,15 @@ export const DispositivoDetalhe: React.FC = () => {
     tensao: t.tensaoV,
     corrente: t.correnteA
   }))
+
+  const getOcorrenciaLabel = (ocorrenciaStr: string) => {
+    switch (ocorrenciaStr) {
+      case 'FalhaSensor': return 'Falha do Sensor'
+      case 'ExcessoConsumo': return 'Excesso de Consumo'
+      case 'ManutencaoRecomendada': return 'Manutenção Recomendada'
+      default: return ocorrenciaStr
+    }
+  }
 
   if (isLoading) {
     return (
@@ -278,7 +274,7 @@ export const DispositivoDetalhe: React.FC = () => {
             </span>
             <span>• {device.tipoAparelho}</span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Calendar size={14} /> Cadastrado em {formatDateTime(device.criadoEm)}
+              <Calendar size={14} /> Cadastrado em {formatDate(device.criadoEm)}
             </span>
           </p>
         </div>
@@ -337,7 +333,7 @@ export const DispositivoDetalhe: React.FC = () => {
                         }}
                         formatter={(value: any, name: any) => {
                           if (name === 'Consumo (kWh)') {
-                            return [`${parseFloat(value).toFixed(5)} kWh`, name]
+                            return [`${formatNumber(value, 5)} kWh`, name]
                           }
                           return [value, name]
                         }}
@@ -370,13 +366,13 @@ export const DispositivoDetalhe: React.FC = () => {
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ fontSize: '11px', color: 'var(--gray-500)', display: 'block' }}>Tensão Média</span>
                   <span style={{ fontWeight: '700', fontSize: '16px', color: 'var(--gray-900)' }}>
-                    {Math.round(telemetries.reduce((acc, t) => acc + t.tensaoV, 0) / telemetries.length)}V
+                    {formatNumber(telemetries.reduce((acc, t) => acc + t.tensaoV, 0) / telemetries.length, 1)} V
                   </span>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ fontSize: '11px', color: 'var(--gray-500)', display: 'block' }}>Corrente Média</span>
                   <span style={{ fontWeight: '700', fontSize: '16px', color: 'var(--gray-900)' }}>
-                    {(telemetries.reduce((acc, t) => acc + t.correnteA, 0) / telemetries.length).toFixed(2)}A
+                    {formatNumber(telemetries.reduce((acc, t) => acc + t.correnteA, 0) / telemetries.length, 2)} A
                   </span>
                 </div>
                 <div style={{ textAlign: 'center' }}>
@@ -432,24 +428,26 @@ export const DispositivoDetalhe: React.FC = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                       <div>
                         <strong style={{ fontSize: '14px', color: 'var(--gray-900)' }}>Laudo #{r.id}</strong>
-                        <div style={{ fontSize: '11px', color: 'var(--gray-500)' }}>
-                          Vinculado ao chamado #{r.chamadoId}
-                        </div>
+                        {r.chamadoId && (
+                          <div style={{ fontSize: '11px', color: 'var(--gray-500)' }}>
+                            Vinculado ao chamado #{r.chamadoId}
+                          </div>
+                        )}
                       </div>
                       <div style={{ textAlign: 'right', fontSize: '11px', color: 'var(--gray-500)' }}>
                         <div>Por: {r.operadorNome}</div>
-                        <div>{formatDateTime(r.criadoEm)}</div>
+                        <div>{formatDate(r.criadoEm)}</div>
                       </div>
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: 'var(--gray-900)' }}>
                       <div>
-                        <span style={{ fontWeight: '600', color: 'var(--gray-500)' }}>Descrição do Problema: </span>
-                        <span>{r.descricao}</span>
+                        <span style={{ fontWeight: '600', color: 'var(--gray-500)' }}>Tipo de Ocorrência: </span>
+                        <span style={{ fontWeight: '600', color: 'var(--green-700)' }}>{getOcorrenciaLabel(r.tipoOcorrencia)}</span>
                       </div>
                       <div>
-                        <span style={{ fontWeight: '600', color: 'var(--gray-500)' }}>Diagnóstico Técnico: </span>
-                        <span>{r.diagnostico}</span>
+                        <span style={{ fontWeight: '600', color: 'var(--gray-500)' }}>Descrição do Problema: </span>
+                        <span>{r.descricao}</span>
                       </div>
                       <div>
                         <span style={{ fontWeight: '600', color: 'var(--gray-500)' }}>Solução Recomendada: </span>
@@ -507,7 +505,7 @@ export const DispositivoDetalhe: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '13.5px' }}>
               <div>
                 <span style={{ fontSize: '11px', color: 'var(--gray-500)', display: 'block' }}>Potência Nominal</span>
-                <strong style={{ color: 'var(--gray-900)' }}>{device.potenciaWatts} Watts</strong>
+                <strong style={{ color: 'var(--gray-900)' }}>{formatNumber(device.potenciaWatts, 0)} Watts</strong>
               </div>
               <div>
                 <span style={{ fontSize: '11px', color: 'var(--gray-500)', display: 'block' }}>Tipo</span>
@@ -543,6 +541,14 @@ export const DispositivoDetalhe: React.FC = () => {
                   <span style={{ fontSize: '11px', color: 'var(--gray-500)', display: 'block' }}>Status Operacional</span>
                   <StatusBadge status={device.sensor.status} />
                 </div>
+                {device.sensor.observacao && (
+                  <div>
+                    <span style={{ fontSize: '11px', color: 'var(--gray-500)', display: 'block' }}>Observação / Comentário</span>
+                    <strong style={{ color: 'var(--green-700)', fontStyle: 'italic', wordBreak: 'break-word', display: 'block', marginTop: '2px' }}>
+                      {device.sensor.observacao}
+                    </strong>
+                  </div>
+                )}
               </div>
             ) : (
               <div style={{
@@ -604,14 +610,12 @@ export const DispositivoDetalhe: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--gray-900)' }}>
-                    Descrição do Problema *
+                    Tipo de Ocorrência *
                   </label>
-                  <textarea
+                  <select
                     className="form-input"
-                    rows={3}
-                    placeholder="Descreva a falha reportada..."
-                    value={laudoDescricao}
-                    onChange={(e) => setLaudoDescricao(e.target.value)}
+                    value={tipoOcorrencia}
+                    onChange={(e) => setTipoOcorrencia(parseInt(e.target.value, 10))}
                     required
                     disabled={isLaudoSubmitting}
                     style={{
@@ -620,21 +624,25 @@ export const DispositivoDetalhe: React.FC = () => {
                       border: '1px solid var(--white-dim)',
                       backgroundColor: 'var(--white-pure)',
                       fontSize: '13px',
-                      resize: 'vertical'
+                      width: '100%'
                     }}
-                  />
+                  >
+                    <option value={0}>Falha do Sensor</option>
+                    <option value={1}>Excesso de Consumo</option>
+                    <option value={2}>Manutenção Recomendada</option>
+                  </select>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--gray-900)' }}>
-                    Diagnóstico Técnico *
+                    Descrição do Problema *
                   </label>
                   <textarea
                     className="form-input"
-                    rows={3}
-                    placeholder="Descreva a análise feita e o estado dos componentes..."
-                    value={laudoDiagnostico}
-                    onChange={(e) => setLaudoDiagnostico(e.target.value)}
+                    rows={4}
+                    placeholder="Descreva a ocorrência ou problema identificado..."
+                    value={laudoDescricao}
+                    onChange={(e) => setLaudoDescricao(e.target.value)}
                     required
                     disabled={isLaudoSubmitting}
                     style={{
@@ -654,8 +662,8 @@ export const DispositivoDetalhe: React.FC = () => {
                   </label>
                   <textarea
                     className="form-input"
-                    rows={3}
-                    placeholder="Descreva a intervenção executada ou ações futuras..."
+                    rows={4}
+                    placeholder="Descreva a solução executada ou ações futuras recomendadas..."
                     value={laudoSolucao}
                     onChange={(e) => setLaudoSolucao(e.target.value)}
                     required
@@ -678,8 +686,8 @@ export const DispositivoDetalhe: React.FC = () => {
                     onClick={() => {
                       setIsLaudoModalOpen(false)
                       setLaudoDescricao('')
-                      setLaudoDiagnostico('')
                       setLaudoSolucao('')
+                      setTipoOcorrencia(0)
                     }}
                     disabled={isLaudoSubmitting}
                   >

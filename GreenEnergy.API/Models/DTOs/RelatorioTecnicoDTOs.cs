@@ -10,9 +10,13 @@ namespace GreenEnergy.API.Models.DTOs
 
         public int? DispositivoId { get; set; }
 
-        [Required(ErrorMessage = "O conteúdo do relatório é obrigatório.")]
-        [StringLength(2000, MinimumLength = 10, ErrorMessage = "O conteúdo deve ter entre 10 e 2000 caracteres.")]
-        public string Conteudo { get; set; } = string.Empty;
+        [Required(ErrorMessage = "A descrição do problema é obrigatória.")]
+        [StringLength(2000, MinimumLength = 10, ErrorMessage = "A descrição deve ter entre 10 e 2000 caracteres.")]
+        public string Descricao { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "A solução recomendada é obrigatória.")]
+        [StringLength(2000, MinimumLength = 10, ErrorMessage = "A solução recomendada deve ter entre 10 e 2000 caracteres.")]
+        public string SolucaoRecomendada { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "O tipo de ocorrência é obrigatório.")]
         public TipoOcorrencia TipoOcorrencia { get; set; }
@@ -26,7 +30,8 @@ namespace GreenEnergy.API.Models.DTOs
         public string? DispositivoNome { get; set; }
         public int OperadorId { get; set; }
         public string OperadorNome { get; set; } = string.Empty;
-        public string Conteudo { get; set; } = string.Empty;
+        public string Descricao { get; set; } = string.Empty;
+        public string SolucaoRecomendada { get; set; } = string.Empty;
         public string TipoOcorrencia { get; set; } = string.Empty;
         public DateTime CriadoEm { get; set; }
     }

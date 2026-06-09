@@ -8,6 +8,7 @@ import { Spinner } from '../../components/ui/Spinner'
 import { useToast } from '../../components/ui/Toast'
 import { ErrorBoundary } from '../../components/ErrorBoundary'
 import api from '../../services/api'
+import { formatNumber } from '../../utils/format'
 
 // Recharts imports
 import {
@@ -399,10 +400,10 @@ export const DispositivoDetalhe: React.FC = () => {
                         }}
                         formatter={(value: any, name: any) => {
                           if (name === 'Consumo (kWh)') {
-                            return [`${parseFloat(value).toFixed(5)} kWh`, name]
+                            return [`${formatNumber(parseFloat(value), 5)} kWh`, name]
                           }
                           if (name === 'Custo Est. (R$)') {
-                            return [`R$ ${parseFloat(value).toFixed(4)}`, name]
+                            return [`R$ ${formatNumber(parseFloat(value), 4)}`, name]
                           }
                           return [value, name]
                         }}
@@ -444,13 +445,13 @@ export const DispositivoDetalhe: React.FC = () => {
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ fontSize: '11px', color: 'var(--gray-500)', display: 'block' }}>Tensão Média</span>
                   <span style={{ fontWeight: '700', fontSize: '16px', color: 'var(--gray-900)' }}>
-                    {Math.round(telemetries.reduce((acc, t) => acc + t.tensaoV, 0) / telemetries.length)}V
+                    {formatNumber(telemetries.reduce((acc, t) => acc + t.tensaoV, 0) / telemetries.length, 1)} V
                   </span>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ fontSize: '11px', color: 'var(--gray-500)', display: 'block' }}>Corrente Média</span>
                   <span style={{ fontWeight: '700', fontSize: '16px', color: 'var(--gray-900)' }}>
-                    {(telemetries.reduce((acc, t) => acc + t.correnteA, 0) / telemetries.length).toFixed(2)}A
+                    {formatNumber(telemetries.reduce((acc, t) => acc + t.correnteA, 0) / telemetries.length, 2)} A
                   </span>
                 </div>
                 <div style={{ textAlign: 'center' }}>

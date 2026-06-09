@@ -13,6 +13,7 @@ interface Sensor {
   modeloSensor: string
   numeroSerie: string
   status: string
+  observacao?: string
 }
 
 interface Device {
@@ -382,6 +383,11 @@ export const Dispositivos: React.FC = () => {
                         <div>
                           <span style={{ fontWeight: '500', color: 'var(--gray-900)' }}>{d.sensor.modeloSensor}</span>
                           <div style={{ fontSize: '11px', color: 'var(--gray-500)' }}>S/N: {d.sensor.numeroSerie}</div>
+                          {d.sensor.observacao && (
+                            <div style={{ fontSize: '11px', color: 'var(--green-700)', fontStyle: 'italic', marginTop: '2px', maxWidth: '200px', wordBreak: 'break-word' }}>
+                              Obs: {d.sensor.observacao}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <span style={{ color: 'var(--red-500)', fontSize: '12px', fontWeight: '500' }}>Sem sensor ativo</span>

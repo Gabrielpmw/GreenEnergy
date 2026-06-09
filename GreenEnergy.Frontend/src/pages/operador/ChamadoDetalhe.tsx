@@ -6,6 +6,7 @@ import { StatusBadge } from '../../components/ui/StatusBadge'
 import { useToast } from '../../components/ui/Toast'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import api from '../../services/api'
+import { formatDate } from '../../utils/format'
 
 interface Chamado {
   id: number
@@ -32,7 +33,8 @@ interface Relatorio {
   id: number
   chamadoId: number
   operadorNome: string
-  conteudo: string
+  descricao: string
+  solucaoRecomendada: string
   tipoOcorrencia: string
   criadoEm: string
 }
@@ -51,8 +53,9 @@ export const ChamadoDetalhe: React.FC = () => {
   const [loadingRelatorios, setLoadingRelatorios] = useState(true)
   
   // Form para novo relatório
-  const [relatorioConteudo, setRelatorioConteudo] = useState('')
-  const [relatorioOcorrencia, setRelatorioOcorrencia] = useState('2') // Padrão: Manutenção Recomendada (2)
+  const [relatorioDescricao, setRelatorioDescricao] = useState('')
+  const [relatorioSolucao, setRelatorioSolucao] = useState('')
+  const [relatorioOcorrencia, setRelatorioOcorrencia] = useState('0') // Padrão: Falha do Sensor (0)
   const [submittingRelatorio, setSubmittingRelatorio] = useState(false)
 
   // Modais de confirmação
@@ -175,20 +178,27 @@ export const ChamadoDetalhe: React.FC = () => {
 
   const handleCriarRelatorio = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (relatorioConteudo.trim().length < 10) {
-      addToast('O relatório deve conter no mínimo 10 caracteres.', 'warning')
+    if (relatorioDescricao.trim().length < 10) {
+      addToast('A descrição do problema deve conter no mínimo 10 caracteres.', 'warning')
+      return
+    }
+    if (relatorioSolucao.trim().length < 10) {
+      addToast('A solução recomendada deve conter no mínimo 10 caracteres.', 'warning')
       return
     }
     try {
       setSubmittingRelatorio(true)
       const res = await api.post('/relatorios', {
         chamadoId: parseInt(id!),
-        conteudo: relatorioConteudo,
+        descricao: relatorioDescricao.trim(),
+        solucaoRecomendada: relatorioSolucao.trim(),
         tipoOcorrencia: parseInt(relatorioOcorrencia)
       })
       if (res.data.success) {
         addToast('Relatório técnico adicionado!', 'success')
-        setRelatorioConteudo('')
+        setRelatorioDescricao('')
+        setRelatorioSolucao('')
+        setRelatorioOcorrencia('0')
         fetchRelatorios()
       } else {
         addToast(res.data.message || 'Erro ao criar relatório.', 'error')
@@ -224,6 +234,15 @@ export const ChamadoDetalhe: React.FC = () => {
         return 'Finalizado'
       default:
         return status
+    }
+  }
+
+  const getOcorrenciaLabel = (ocorrenciaStr: string) => {
+    switch (ocorrenciaStr) {
+      case 'FalhaSensor': return 'Falha do Sensor'
+      case 'ExcessoConsumo': return 'Excesso de Consumo'
+      case 'ManutencaoRecomendada': return 'Manutenção Recomendada'
+      default: return ocorrenciaStr
     }
   }
 
@@ -293,7 +312,7 @@ export const ChamadoDetalhe: React.FC = () => {
             </div>
             <div>
               <span style={{ color: 'var(--gray-500)' }}>Data de Abertura:</span>{' '}
-              <strong>{new Date(chamado.criadoEm).toLocaleDateString('pt-BR')} às {new Date(chamado.criadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</strong>
+              <strong>{formatDate(chamado.criadoEm)}</strong>
             </div>
             {chamado.operadorNome && (
               <div>
@@ -445,15 +464,24 @@ export const ChamadoDetalhe: React.FC = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '12px' }}>
                     <strong style={{ color: 'var(--green-900)' }}>Resp: {r.operadorNome}</strong>
                     <span style={{ color: 'var(--gray-500)' }}>
-                      {new Date(r.criadoEm).toLocaleDateString('pt-BR')}
+                      {formatDate(r.criadoEm)}
                     </span>
                   </div>
                   <div style={{ marginBottom: '6px' }}>
-                    <span className="unit-type-badge residencial" style={{ fontSize: '10px', textTransform: 'capitalize' }}>
-                      {r.tipoOcorrencia === 'FalhaSensor' ? 'Falha do Sensor' : r.tipoOcorrencia === 'ExcessoConsumo' ? 'Excesso de Consumo' : 'Manutenção'}
+                    <span className="unit-type-badge residencial" style={{ fontSize: '10px', textTransform: 'none' }}>
+                      {getOcorrenciaLabel(r.tipoOcorrencia)}
                     </span>
                   </div>
-                  <p style={{ margin: 0, fontSize: '13px', color: 'var(--gray-900)', lineHeight: '1.4' }}>{r.conteudo}</p>
+                  <div style={{ fontSize: '13px', color: 'var(--gray-900)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div>
+                      <span style={{ fontWeight: '600', color: 'var(--gray-500)' }}>Descrição: </span>
+                      <span>{r.descricao}</span>
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: '600', color: 'var(--gray-500)' }}>Solução: </span>
+                      <span>{r.solucaoRecomendada}</span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -482,17 +510,37 @@ export const ChamadoDetalhe: React.FC = () => {
                   >
                     <option value="0">Falha do Sensor</option>
                     <option value="1">Excesso de Consumo</option>
-                    <option value="2">Manutenção Recomendada / Outros</option>
+                    <option value="2">Manutenção Recomendada</option>
                   </select>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--gray-500)' }}>Conteúdo do Relatório</label>
+                  <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--gray-500)' }}>Descrição do Problema *</label>
                   <textarea
-                    rows={4}
-                    value={relatorioConteudo}
-                    onChange={(e) => setRelatorioConteudo(e.target.value)}
-                    placeholder="Descreva as ações realizadas no local, testes efetuados ou diagnósticos do dispositivo..."
+                    rows={3}
+                    value={relatorioDescricao}
+                    onChange={(e) => setRelatorioDescricao(e.target.value)}
+                    placeholder="Descreva a ocorrência ou problema identificado no chamado..."
+                    required
+                    style={{
+                      padding: '12px',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--white-dim)',
+                      backgroundColor: 'var(--white-pure)',
+                      fontSize: '13px',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--gray-500)' }}>Solução Recomendada *</label>
+                  <textarea
+                    rows={3}
+                    value={relatorioSolucao}
+                    onChange={(e) => setRelatorioSolucao(e.target.value)}
+                    placeholder="Descreva a intervenção realizada ou a solução proposta..."
+                    required
                     style={{
                       padding: '12px',
                       borderRadius: 'var(--radius-md)',

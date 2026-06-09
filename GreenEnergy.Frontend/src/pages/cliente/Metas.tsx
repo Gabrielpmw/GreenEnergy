@@ -6,6 +6,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import { useToast } from '../../components/ui/Toast'
 import api from '../../services/api'
+import { formatNumber, formatCurrency } from '../../utils/format'
 
 interface Meta {
   id: number
@@ -253,8 +254,8 @@ export const Metas: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {metas.map((m) => {
             const equivVal = m.tipoMeta === 'KWh' 
-              ? `R$ ${(m.valorLimite * valorTarifa).toFixed(2)}`
-              : `${(m.valorLimite / valorTarifa).toFixed(2)} kWh`;
+              ? formatCurrency(m.valorLimite * valorTarifa)
+              : `${formatNumber(m.valorLimite / valorTarifa, 2)} kWh`;
 
             return (
               <div 
