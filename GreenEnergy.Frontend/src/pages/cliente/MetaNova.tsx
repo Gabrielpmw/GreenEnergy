@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, Target, HelpCircle, AlertTriangle, Calendar, Power } from 'lucide-react'
 import { useToast } from '../../components/ui/Toast'
 import { Spinner } from '../../components/ui/Spinner'
@@ -15,21 +15,28 @@ interface Device {
 
 export const MetaNova: React.FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { addToast } = useToast()
+
+  const editingMeta = location.state?.editingMeta as any
 
   const [devices, setDevices] = useState<Device[]>([])
   const [isLoadingDevices, setIsLoadingDevices] = useState(true)
   const [valorTarifa, setValorTarifa] = useState(0.65) // Fallback padrão
 
   // Form states
-  const [dispositivoId, setDispositivoId] = useState('')
-  const [tipoMeta, setTipoMeta] = useState('0') // 0 = KWh, 1 = Financeira
-  const [valorLimite, setValorLimite] = useState('')
-  const [justificativa, setJustificativa] = useState('')
-  const [dataInicio, setDataInicio] = useState(new Date().toISOString().substring(0, 10))
-  const [tempoIndeterminado, setTempoIndeterminado] = useState(true)
-  const [dataFim, setDataFim] = useState('')
-  const [desligarAoEstourar, setDesligarAoEstourar] = useState(false)
+  const [dispositivoId, setDispositivoId] = useState(editingMeta ? editingMeta.dispositivoId.toString() : '')
+  const [tipoMeta, setTipoMeta] = useState(editingMeta ? (editingMeta.tipoMeta === 'KWh' ? '0' : '1') : '0') // 0 = KWh, 1 = Financeira
+  const [valorLimite, setValorLimite] = useState(editingMeta ? editingMeta.valorLimite.toString() : '')
+  const [justificativa, setJustificativa] = useState(editingMeta ? editingMeta.justificativa : '')
+  const [dataInicio, setDataInicio] = useState(
+    editingMeta 
+      ? editingMeta.dataInicio.substring(0, 10) 
+      : new Date().toISOString().substring(0, 10)
+  )
+  const [tempoIndeterminado, setTempoIndeterminado] = useState(editingMeta ? !editingMeta.dataFim : true)
+  const [dataFim, setDataFim] = useState(editingMeta && editingMeta.dataFim ? editingMeta.dataFim.substring(0, 10) : '')
+  const [desligarAoEstourar, setDesligarAoEstourar] = useState(editingMeta ? editingMeta.desligarAoEstourar : false)
   
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -49,7 +56,7 @@ export const MetaNova: React.FC = () => {
         if (devicesRes.status === 'fulfilled' && devicesRes.value.data.success) {
           list = devicesRes.value.data.data || []
           setDevices(list)
-          if (list.length > 0) {
+          if (list.length > 0 && !editingMeta) {
             setDispositivoId(list[0].id.toString())
           }
         } else {
@@ -116,10 +123,17 @@ export const MetaNova: React.FC = () => {
         desligarAoEstourar
       }
 
-      const res = await api.post('/metas', payload)
+      const res = editingMeta
+        ? await api.put(`/metas/${editingMeta.id}`, payload)
+        : await api.post('/metas', payload)
 
       if (res.data.success) {
-        addToast('Proposta de meta enviada com sucesso!', 'success')
+        addToast(
+          editingMeta 
+            ? 'Proposta de meta atualizada com sucesso!' 
+            : 'Proposta de meta enviada com sucesso!', 
+          'success'
+        )
         navigate('/cliente/metas')
       } else {
         setErrorMessage(res.data.message || 'Erro ao enviar a proposta de meta.')
@@ -189,14 +203,36 @@ export const MetaNova: React.FC = () => {
           <ArrowLeft size={14} />
           Voltar
         </button>
-        <h1 className="dashboard-title">Propor Meta de Consumo</h1>
-        <p className="dashboard-subtitle">Proponha limites mensais para ajudar a mapear custos e receber alertas automáticos de economia.</p>
+        <h1 className="dashboard-title">{editingMeta ? 'Editar Proposta de Meta' : 'Propor Meta de Consumo'}</h1>
+        <p className="dashboard-subtitle">
+          {editingMeta 
+            ? 'Ajuste os parâmetros da proposta de meta de consumo solicitada.' 
+            : 'Proponha limites mensais para ajudar a mapear custos e receber alertas automáticos de economia.'}
+        </p>
       </header>
 
       <div className="form-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
         {errorMessage && (
           <div className="toast toast-error" style={{ position: 'relative', margin: '0 0 24px 0', right: 0, bottom: 0, minWidth: 'auto' }}>
             <span className="toast-message">{errorMessage}</span>
+          </div>
+        )}
+
+        {editingMeta && editingMeta.status?.toLowerCase() === 'devolvida' && editingMeta.avaliacaoObs && (
+          <div style={{
+            marginBottom: '24px',
+            padding: '16px',
+            backgroundColor: '#fff5f5',
+            border: '1px solid #fee2e2',
+            borderLeft: '4px solid var(--red-500)',
+            borderRadius: 'var(--radius-md)'
+          }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '700', color: '#991b1b' }}>
+              Meta Devolvida pelo Operador ({editingMeta.operadorNome || 'Técnico'})
+            </h4>
+            <p style={{ margin: 0, fontSize: '13px', color: '#7f1d1d', lineHeight: '1.4' }}>
+              <strong>Motivo do retorno:</strong> {editingMeta.avaliacaoObs}
+            </p>
           </div>
         )}
 
@@ -226,7 +262,7 @@ export const MetaNova: React.FC = () => {
                   className="form-input"
                   value={dispositivoId}
                   onChange={(e) => setDispositivoId(e.target.value)}
-                  disabled={isSaving}
+                  disabled={isSaving || !!editingMeta}
                   required
                 >
                   {devices.map(d => (
@@ -426,12 +462,12 @@ export const MetaNova: React.FC = () => {
               {isSaving ? (
                 <>
                   <Spinner size="sm" color="white" />
-                  Enviando Proposta...
+                  {editingMeta ? 'Salvando Alterações...' : 'Enviando Proposta...'}
                 </>
               ) : (
                 <>
                   <Target size={16} />
-                  Enviar Proposta de Meta
+                  {editingMeta ? 'Salvar Alterações' : 'Enviar Proposta de Meta'}
                 </>
               )}
             </button>
