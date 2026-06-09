@@ -93,9 +93,9 @@ namespace GreenEnergy.Worker.Workers
 
                 if (ultimaLeitura == null) continue;
 
-                // Valores esperados nominalmente para um ciclo de 45s
-                double consumoKWhEsperado = (dispositivo.PotenciaWatts * (45.0 / 3600.0)) / 1000.0;
-                double correnteEsperada = dispositivo.PotenciaWatts / ultimaLeitura.TensaoV;
+                // Valores esperados nominalmente para um ciclo de telemetria (que simula 10 horas de uso contínuo)
+                double consumoKWhEsperado = (dispositivo.PotenciaWatts * 10.0) / 1000.0;
+                double correnteEsperada = ultimaLeitura.TensaoV > 0.0 ? (dispositivo.PotenciaWatts / ultimaLeitura.TensaoV) : 0.0;
 
                 // Anomalia definida se o consumo ou corrente for 50% superior ao esperado nominalmente
                 if (ultimaLeitura.ConsumoKWh > (consumoKWhEsperado * 1.5) || ultimaLeitura.CorrenteA > (correnteEsperada * 1.5))

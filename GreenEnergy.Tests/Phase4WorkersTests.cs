@@ -109,13 +109,13 @@ namespace GreenEnergy.Tests
             var sensor = new Sensor { Id = 5, DispositivoId = 10, ModeloSensor = "SNSR-01", NumeroSerie = "SN-TEST123", Status = SensorStatus.EmUso, IsActive = true, IsDeleted = false };
             db.Sensores.Add(sensor);
 
-            // Inserir telemetria anômala (pico de consumo: nominal é 0.0125 kWh, inserimos 0.03 kWh que é > 1.5x)
+            // Inserir telemetria anômala (pico de consumo: nominal é 10.0 kWh, inserimos 30.0 kWh que é > 1.5x)
             var telemetriaAnomala = new Telemetria
             {
                 SensorId = 5,
-                ConsumoKWh = 0.03, // > 0.0125 * 1.5
+                ConsumoKWh = 30.0, // > 10.0 * 1.5
                 TensaoV = 127,
-                CorrenteA = 10.0, // > (1000 / 127) * 1.5
+                CorrenteA = 24.0, // > (1000 / 127) * 1.5
                 RegistradoEm = DateTime.UtcNow
             };
             db.Telemetrias.Add(telemetriaAnomala);
