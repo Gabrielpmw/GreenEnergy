@@ -32,15 +32,12 @@ import { Metas as OperadorMetas } from './pages/operador/Metas'
 import { Relatorios as OperadorRelatorios } from './pages/operador/Relatorios'
 import { Categorias as OperadorCategorias } from './pages/operador/Categorias'
 import { Clientes as OperadorClientes } from './pages/operador/Clientes'
-
-
-// Stubs de Páginas do Administrador
-const AdminDashboard = () => <div><h3>Cockpit do Ecossistema</h3><p>Logs, saúde da telemetria e das APIs integradas.</p></div>
-const AdminUsuarios = () => <div><h3>Gestão de Usuários</h3><p>Ativação, desativação de clientes e controle de operadores.</p></div>
-const AdminOperadorNovo = () => <div><h3>Criar Operador</h3><p>Cadastro de novos técnicos operacionais.</p></div>
-const AdminTarifas = () => <div><h3>Gestão de Tarifas</h3><p>Bandeiras e reajustes tarifários homologados.</p></div>
-const AdminConfigApis = () => <div><h3>Configuração de APIs</h3><p>Chaves de integração (OpenWeather, IBGE).</p></div>
-const AdminAuditoria = () => <div><h3>Logs de Auditoria</h3><p>Logs de ações críticas executadas no sistema.</p></div>
+import { Dashboard as AdminDashboard } from './pages/admin/Dashboard'
+import { Usuarios as AdminUsuarios } from './pages/admin/Usuarios'
+import { OperadorNovo as AdminOperadorNovo } from './pages/admin/OperadorNovo'
+import { Tarifas as AdminTarifas } from './pages/admin/Tarifas'
+import { ConfigApis as AdminConfigApis } from './pages/admin/ConfigApis'
+import { Auditoria as AdminAuditoria } from './pages/admin/Auditoria'
 
 export const router = createBrowserRouter([
   {

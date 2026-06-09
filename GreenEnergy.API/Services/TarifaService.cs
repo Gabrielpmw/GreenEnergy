@@ -84,7 +84,7 @@ namespace GreenEnergy.API.Services
                 Id = t.Id,
                 Bandeira = t.Bandeira.ToString(),
                 ValorKWh = t.ValorKWh,
-                VigenciaInicio = t.VigenciaInicio,
+                VigenciaInicio = DateTime.SpecifyKind(t.VigenciaInicio, DateTimeKind.Utc),
                 IsActive = t.IsActive
             };
         }

@@ -51,10 +51,11 @@ namespace GreenEnergy.API.Services
             // 5. Saúde do Worker Service (Heartbeat)
             string saudeWorker = "Inativo";
             var heartbeatCfg = await _context.ConfiguracoesAPI.FirstOrDefaultAsync(c => c.NomeAPI == "Worker_Heartbeat" && !c.IsDeleted);
-            if (heartbeatCfg != null && DateTime.TryParse(heartbeatCfg.ChaveAcesso, out var lastHeartbeat))
+            if (heartbeatCfg != null)
             {
-                var timeDiff = DateTime.UtcNow - lastHeartbeat.ToUniversalTime();
-                if (timeDiff <= TimeSpan.FromMinutes(2))
+                var lastHeartbeat = DateTime.SpecifyKind(heartbeatCfg.AtualizadoEm, DateTimeKind.Utc);
+                var timeDiff = DateTime.UtcNow - lastHeartbeat;
+                if (Math.Abs(timeDiff.TotalMinutes) <= 2)
                 {
                     saudeWorker = "Saudável";
                 }

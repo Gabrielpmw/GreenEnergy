@@ -41,6 +41,26 @@ namespace GreenEnergy.API.Repositories
         public async Task AddAsync(Tarifa tarifa)
         {
             await _context.Tarifas.AddAsync(tarifa);
+
+            // Notificar todos os clientes sobre a nova tarifa
+            var clientes = await _context.Usuarios
+                .Where(u => u.Role == UsuarioRole.Cliente && u.IsActive && !u.IsDeleted)
+                .ToListAsync();
+
+            foreach (var cliente in clientes)
+            {
+                var alerta = new Alerta
+                {
+                    UsuarioId = cliente.Id,
+                    DispositivoId = null,
+                    Mensagem = $"Aviso de Tarifa: A bandeira tarifária foi alterada para {tarifa.Bandeira} com o valor de R$ {tarifa.ValorKWh:F4} por kWh.",
+                    Tipo = TipoAlerta.Informativo,
+                    Lido = false,
+                    GeradoEm = DateTime.UtcNow
+                };
+                await _context.Alertas.AddAsync(alerta);
+            }
+
             await _context.SaveChangesAsync();
         }
 

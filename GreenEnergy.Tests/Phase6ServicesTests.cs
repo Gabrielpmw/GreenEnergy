@@ -124,6 +124,45 @@ namespace GreenEnergy.Tests
             Assert.False(inDb!.IsActive);
         }
 
+        [Fact]
+        public async Task CreateTarifa_ShouldAlertAllActiveClients()
+        {
+            // Arrange
+            var db = GetInMemoryDbContext();
+            var repo = new TarifaRepository(db);
+            var service = new TarifaService(repo);
+
+            // Adicionar dois clientes ativos, um operador, e um cliente deletado/inativo
+            var c1 = new Usuario { Id = 100, Nome = "Cliente Ativo 1", Email = "c1@test.com", Role = UsuarioRole.Cliente, IsActive = true, IsDeleted = false };
+            var c2 = new Usuario { Id = 101, Nome = "Cliente Ativo 2", Email = "c2@test.com", Role = UsuarioRole.Cliente, IsActive = true, IsDeleted = false };
+            var c3 = new Usuario { Id = 102, Nome = "Cliente Inativo", Email = "c3@test.com", Role = UsuarioRole.Cliente, IsActive = false, IsDeleted = false };
+            var c4 = new Usuario { Id = 103, Nome = "Cliente Deletado", Email = "c4@test.com", Role = UsuarioRole.Cliente, IsActive = true, IsDeleted = true };
+            var op = new Usuario { Id = 104, Nome = "Operador", Email = "op@test.com", Role = UsuarioRole.Operador, IsActive = true, IsDeleted = false };
+            
+            await db.Usuarios.AddRangeAsync(c1, c2, c3, c4, op);
+            await db.SaveChangesAsync();
+
+            var dto = new CreateTarifaRequestDTO
+            {
+                Bandeira = BandeiraTarifa.Vermelha2,
+                ValorKWh = 0.95
+            };
+
+            // Act
+            var result = await service.CreateTarifaAsync(dto);
+
+            // Assert
+            Assert.True(result.Success);
+            
+            // Verificar se alertas foram gerados apenas para clientes ativos e não deletados (c1 e c2)
+            var alertas = await db.Alertas.ToListAsync();
+            Assert.Equal(2, alertas.Count);
+            Assert.Contains(alertas, a => a.UsuarioId == 100);
+            Assert.Contains(alertas, a => a.UsuarioId == 101);
+            Assert.All(alertas, a => Assert.Contains("Vermelha2", a.Mensagem));
+            Assert.All(alertas, a => Assert.True(a.Mensagem.Contains("0,9500") || a.Mensagem.Contains("0.9500")));
+        }
+
         #endregion
 
         #region CONFIGURACAO API TESTS

@@ -115,6 +115,22 @@ namespace GreenEnergy.API.Middleware
                                 });
                             }
                         }
+                        else if (auditAttribute.Entidade.Equals("Tarifa", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            var tarifaRepository = httpContext.RequestServices.GetRequiredService<ITarifaRepository>();
+                            var originalTarifa = await tarifaRepository.GetByIdAsync(entityId);
+                            if (originalTarifa != null)
+                            {
+                                dadosAnteriores = JsonSerializer.Serialize(new
+                                {
+                                    originalTarifa.Id,
+                                    Bandeira = originalTarifa.Bandeira.ToString(),
+                                    originalTarifa.ValorKWh,
+                                    originalTarifa.VigenciaInicio,
+                                    originalTarifa.IsActive
+                                });
+                            }
+                        }
                     }
                 }
             }

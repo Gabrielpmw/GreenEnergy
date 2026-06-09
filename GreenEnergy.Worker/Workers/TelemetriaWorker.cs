@@ -64,7 +64,8 @@ namespace GreenEnergy.Worker.Workers
                             ChaveAcesso = DateTime.UtcNow.ToString("O"),
                             BaseUrl = "LocalWorker",
                             IsActive = true,
-                            IsDeleted = false
+                            IsDeleted = false,
+                            AtualizadoEm = DateTime.UtcNow
                         };
                         await db.ConfiguracoesAPI.AddAsync(heartbeatConfig);
                     }
