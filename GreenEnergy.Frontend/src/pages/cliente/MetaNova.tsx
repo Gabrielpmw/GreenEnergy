@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Target } from 'lucide-react'
+import { ArrowLeft, Target, HelpCircle, AlertTriangle } from 'lucide-react'
 import { useToast } from '../../components/ui/Toast'
 import { Spinner } from '../../components/ui/Spinner'
 import api from '../../services/api'
@@ -12,12 +12,14 @@ interface Device {
   unidadeConsumidoraId: number
 }
 
+
 export const MetaNova: React.FC = () => {
   const navigate = useNavigate()
   const { addToast } = useToast()
 
   const [devices, setDevices] = useState<Device[]>([])
   const [isLoadingDevices, setIsLoadingDevices] = useState(true)
+  const [valorTarifa, setValorTarifa] = useState(0.65) // Fallback padrão
 
   // Form states
   const [dispositivoId, setDispositivoId] = useState('')
@@ -28,28 +30,43 @@ export const MetaNova: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  // Fetch client devices
+  // Fetch client devices and active tariff
   useEffect(() => {
-    const fetchDevices = async () => {
+    const fetchData = async () => {
       try {
         setIsLoadingDevices(true)
-        const res = await api.get('/dispositivos')
-        if (res.data.success) {
-          const list = res.data.data || []
+        
+        const [devicesRes, tarifasRes] = await Promise.allSettled([
+          api.get('/dispositivos'),
+          api.get('/tarifas')
+        ])
+
+        let list: Device[] = []
+        if (devicesRes.status === 'fulfilled' && devicesRes.value.data.success) {
+          list = devicesRes.value.data.data || []
           setDevices(list)
           if (list.length > 0) {
             setDispositivoId(list[0].id.toString())
           }
+        } else {
+          addToast('Erro ao carregar dispositivos.', 'error')
+        }
+
+        if (tarifasRes.status === 'fulfilled' && tarifasRes.value.data.success) {
+          const tarifasData = tarifasRes.value.data.data || []
+          const active = tarifasData.find((t: any) => t.isActive)
+          if (active) {
+            setValorTarifa(active.valorKWh)
+          }
         }
       } catch (err) {
-        console.error('Erro ao buscar dispositivos:', err)
-        addToast('Erro ao carregar os dispositivos.', 'error')
+        console.error('Erro ao buscar dados iniciais:', err)
       } finally {
         setIsLoadingDevices(false)
       }
     }
 
-    fetchDevices()
+    fetchData()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,6 +114,49 @@ export const MetaNova: React.FC = () => {
       setIsSaving(false)
     }
   }
+
+  // Cálculos do Estimador Inteligente
+  const getEstimation = () => {
+    const limitNum = parseFloat(valorLimite)
+    if (isNaN(limitNum) || limitNum <= 0) return null
+
+    const device = devices.find(d => d.id.toString() === dispositivoId)
+    if (!device) return null
+
+    const watts = device.potenciaWatts
+    let limitKWh = limitNum
+
+    if (tipoMeta === '1') {
+      // Financeira: Converter R$ em kWh baseado na tarifa
+      limitKWh = limitNum / valorTarifa
+    }
+
+    // Horas contínuas = (kWh * 1000) / Watts
+    const totalHours = (limitKWh * 1000) / watts
+    const hoursPerDay = totalHours / 30
+
+    // Formatação de minutos
+    const formatHoursLabel = (hours: number) => {
+      if (hours >= 1) {
+        const wholeHours = Math.floor(hours)
+        const mins = Math.round((hours - wholeHours) * 60)
+        return mins > 0 ? `${wholeHours}h e ${mins}min` : `${wholeHours}h`
+      } else {
+        const mins = Math.round(hours * 60)
+        return `${mins} minutos`
+      }
+    }
+
+    return {
+      limitKWh: limitKWh.toFixed(2),
+      totalHours: totalHours.toFixed(1),
+      hoursPerDayLabel: formatHoursLabel(hoursPerDay),
+      isLowLimit: hoursPerDay < 0.25 // Menos de 15 minutos por dia
+    }
+  }
+
+  const estimation = getEstimation()
+  const currentDevice = devices.find(d => d.id.toString() === dispositivoId)
 
   return (
     <div className="dashboard-container">
@@ -193,6 +253,54 @@ export const MetaNova: React.FC = () => {
                 />
               </div>
             </div>
+
+            {/* Simulador/Estimador Inteligente de Metas */}
+            {estimation && currentDevice && (
+              <div style={{
+                marginTop: '20px',
+                padding: '16px',
+                backgroundColor: 'var(--green-50)',
+                border: '1px solid var(--green-200)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '13.5px',
+                color: 'var(--green-950)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontWeight: '700' }}>
+                  <HelpCircle size={16} color="var(--green-700)" />
+                  <span>Entendendo seu Limite (Estimador GreenEnergy)</span>
+                </div>
+                
+                <p style={{ margin: '0 0 6px 0', lineHeight: '1.4' }}>
+                  Para o aparelho <strong>{currentDevice.nome} ({currentDevice.potenciaWatts}W)</strong>, o limite sugerido de{' '}
+                  <strong>{valorLimite} {tipoMeta === '0' ? 'kWh' : 'R$'}</strong>{' '}
+                  {tipoMeta === '1' && `(equivalente a aproximadamente ${estimation.limitKWh} kWh com a tarifa de R$ ${valorTarifa.toFixed(2)}/kWh)`}{' '}
+                  corresponde a aproximadamente:
+                </p>
+                
+                <ul style={{ margin: '0 0 8px 0', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <li><strong>{estimation.totalHours} horas</strong> de funcionamento contínuo no mês.</li>
+                  <li>Um limite de funcionamento médio diário de <strong>{estimation.hoursPerDayLabel}</strong> (durante 30 dias).</li>
+                </ul>
+
+                {estimation.isLowLimit && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backgroundColor: '#fffbeb',
+                    border: '1px solid #fef3c7',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    fontSize: '12.5px',
+                    color: '#b45309',
+                    marginTop: '8px'
+                  }}>
+                    <AlertTriangle size={14} />
+                    <span><strong>Atenção:</strong> Este limite é muito baixo para a potência deste aparelho, permitindo menos de 15 minutos de funcionamento diário. Considere aumentar o valor.</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Justificativa */}
             <div className="form-group" style={{ marginTop: '16px' }}>
