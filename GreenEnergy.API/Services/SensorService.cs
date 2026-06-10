@@ -128,16 +128,23 @@ namespace GreenEnergy.API.Services
 
         private SensorResponseDTO MapToResponse(Sensor s)
         {
+            var dispositivo = s.Dispositivo;
+            var unidade = dispositivo?.UnidadeConsumidora;
+            var usuario = unidade?.Usuario;
+            var perfil = usuario?.Perfil;
+
             return new SensorResponseDTO
             {
                 Id = s.Id,
                 DispositivoId = s.DispositivoId,
-                DispositivoNome = s.Dispositivo != null ? s.Dispositivo.Nome : null,
+                DispositivoNome = dispositivo != null ? dispositivo.Nome : null,
                 ModeloSensor = s.ModeloSensor,
                 NumeroSerie = s.NumeroSerie,
                 Status = s.Status.ToString(),
                 UltimoSinal = s.UltimoSinal,
-                Observacao = s.Observacao
+                Observacao = s.Observacao,
+                ClienteNome = usuario?.Nome,
+                ClienteCpf = perfil?.Documento
             };
         }
     }

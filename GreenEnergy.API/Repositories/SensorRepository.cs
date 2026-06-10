@@ -20,6 +20,9 @@ namespace GreenEnergy.API.Repositories
         {
             return await _context.Sensores
                 .Include(s => s.Dispositivo)
+                    .ThenInclude(d => d!.UnidadeConsumidora)
+                        .ThenInclude(u => u.Usuario)
+                            .ThenInclude(usr => usr.Perfil)
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 
@@ -27,6 +30,9 @@ namespace GreenEnergy.API.Repositories
         {
             return await _context.Sensores
                 .Include(s => s.Dispositivo)
+                    .ThenInclude(d => d!.UnidadeConsumidora)
+                        .ThenInclude(u => u.Usuario)
+                            .ThenInclude(usr => usr.Perfil)
                 .ToListAsync();
         }
 

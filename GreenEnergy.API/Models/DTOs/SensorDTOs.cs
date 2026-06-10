@@ -35,6 +35,8 @@ namespace GreenEnergy.API.Models.DTOs
         public string Status { get; set; } = string.Empty; // Disponivel, EmUso, Manutencao, Defeito
         public DateTime? UltimoSinal { get; set; }
         public string? Observacao { get; set; }
+        public string? ClienteNome { get; set; }
+        public string? ClienteCpf { get; set; }
     }
 }
 
