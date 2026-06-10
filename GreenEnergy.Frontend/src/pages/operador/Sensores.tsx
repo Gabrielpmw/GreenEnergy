@@ -26,6 +26,8 @@ export const Sensores: React.FC = () => {
 
   const [sensores, setSensores] = useState<Sensor[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [filterCpf, setFilterCpf] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
 
   const fetchSensores = async () => {
     try {
