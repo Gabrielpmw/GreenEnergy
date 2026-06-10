@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -55,6 +56,10 @@ namespace GreenEnergy.API.Services
                 else if (codigo == "3550308") { nomeMunicipio = "São Paulo"; uf = "SP"; populacao = 12300000; }
                 else if (codigo == "3509502") { nomeMunicipio = "Campinas"; uf = "SP"; populacao = 1213000; }
                 else if (codigo == "3304557") { nomeMunicipio = "Rio de Janeiro"; uf = "RJ"; populacao = 6748000; }
+                else if (codigo == "1721000") { nomeMunicipio = "Palmas"; uf = "TO"; populacao = 300000; }
+                else if (codigo == "1702109") { nomeMunicipio = "Araguaína"; uf = "TO"; populacao = 171000; }
+                else if (codigo == "1716109") { nomeMunicipio = "Paraíso do Tocantins"; uf = "TO"; populacao = 52000; }
+                else if (codigo == "1709302") { nomeMunicipio = "Guaraí"; uf = "TO"; populacao = 26000; }
 
                 try
                 {
@@ -120,6 +125,59 @@ namespace GreenEnergy.API.Services
             };
 
             return new ApiResponse<IbgeMunicipioResponseDTO>(dto);
+        }
+
+        public async Task<ApiResponse<IEnumerable<MercadoCidadeResponseDTO>>> ObterDadosMercadoAdminAsync()
+        {
+            var units = await _context.UnidadesConsumidoras
+                .Where(u => u.IsActive && !u.IsDeleted)
+                .Include(u => u.Dispositivos)
+                .ThenInclude(d => d.Sensor)
+                .ThenInclude(s => s.Telemetrias)
+                .ToListAsync();
+
+            var grouped = units
+                .Where(u => !string.IsNullOrWhiteSpace(u.CodigoIBGE))
+                .GroupBy(u => u.CodigoIBGE)
+                .ToList();
+
+            var list = new List<MercadoCidadeResponseDTO>();
+
+            foreach (var group in grouped)
+            {
+                var codigoIbge = group.Key;
+                var sampleUnit = group.First();
+                var count = group.Count();
+
+                double totalConsumo = group
+                    .SelectMany(u => u.Dispositivos)
+                    .Where(d => d.Sensor != null)
+                    .SelectMany(d => d.Sensor!.Telemetrias)
+                    .Sum(t => t.ConsumoKWh);
+
+                var ibgeResult = await ObterMunicipioPorCodigoAsync(codigoIbge);
+                int populacao = 100000; // Fallback
+                if (ibgeResult.Success && ibgeResult.Data != null)
+                {
+                    populacao = ibgeResult.Data.PopulacaoEstimada;
+                }
+
+                double taxaAdesao = populacao > 0 ? ((double)count / populacao) * 100 : 0;
+
+                list.Add(new MercadoCidadeResponseDTO
+                {
+                    CodigoIBGE = codigoIbge,
+                    Cidade = sampleUnit.Cidade,
+                    Estado = sampleUnit.Estado,
+                    PopulacaoEstimada = populacao,
+                    QuantidadeUnidades = count,
+                    TaxaAdesaoPercentual = Math.Round(taxaAdesao, 4),
+                    ConsumoTotalKWh = Math.Round(totalConsumo, 2)
+                });
+            }
+
+            var resultList = list.OrderByDescending(x => x.TaxaAdesaoPercentual).AsEnumerable();
+            return new ApiResponse<IEnumerable<MercadoCidadeResponseDTO>>(resultList);
         }
     }
 }

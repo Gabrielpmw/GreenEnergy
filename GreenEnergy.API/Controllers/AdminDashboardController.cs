@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -14,10 +15,12 @@ namespace GreenEnergy.API.Controllers
     public class AdminDashboardController : ControllerBase
     {
         private readonly IAdminDashboardService _dashboardService;
+        private readonly IIbgeService _ibgeService;
 
-        public AdminDashboardController(IAdminDashboardService dashboardService)
+        public AdminDashboardController(IAdminDashboardService dashboardService, IIbgeService ibgeService)
         {
             _dashboardService = dashboardService;
+            _ibgeService = ibgeService;
         }
 
         /// <summary>
@@ -30,6 +33,18 @@ namespace GreenEnergy.API.Controllers
         public async Task<IActionResult> GetDashboardMetrics()
         {
             var result = await _dashboardService.GetDashboardMetricsAsync();
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Obtém dados demográficos e taxa de adesão de mercado por município (Apenas Admin).
+        /// </summary>
+        /// <returns>Dados demográficos por município.</returns>
+        [HttpGet("mercado-ibge")]
+        [ProducesResponseType(typeof(ApiResponse<IEnumerable<MercadoCidadeResponseDTO>>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetMercadoIbge()
+        {
+            var result = await _ibgeService.ObterDadosMercadoAdminAsync();
             return Ok(result);
         }
     }

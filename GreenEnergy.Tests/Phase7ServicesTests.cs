@@ -13,6 +13,9 @@ using GreenEnergy.API.Models.DTOs;
 using GreenEnergy.API.Models.Entities;
 using GreenEnergy.API.Services;
 using GreenEnergy.API.Integrations;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using GreenEnergy.API.Controllers;
 
 namespace GreenEnergy.Tests
 {
@@ -123,6 +126,58 @@ namespace GreenEnergy.Tests
             Assert.Equal("SP", result.Data.UF);
         }
 
+        [Fact]
+        public async Task ObterDadosMercadoAdmin_ShouldReturnCalculatedPenetrationAndConsumption()
+        {
+            // Arrange
+            var db = GetInMemoryDbContext();
+
+            // Seed active unit
+            var u1 = new UnidadeConsumidora { Id = 10, UsuarioId = 1, CEP = "13480000", Cidade = "Limeira", Estado = "SP", CodigoIBGE = "3526902", IsActive = true, IsDeleted = false };
+            db.UnidadesConsumidoras.Add(u1);
+
+            // Seed device and sensor and telemetry
+            var d1 = new Dispositivo { Id = 10, UnidadeConsumidoraId = u1.Id, Nome = "Ar Condicionado", PotenciaWatts = 1000, CategoriaId = 1 };
+            db.Dispositivos.Add(d1);
+            var s1 = new Sensor { Id = 10, DispositivoId = d1.Id, ModeloSensor = "M1", NumeroSerie = "N1", Status = SensorStatus.EmUso, IsActive = true, IsDeleted = false };
+            db.Sensores.Add(s1);
+            var t1 = new Telemetria { SensorId = s1.Id, ConsumoKWh = 150.0, RegistradoEm = DateTime.UtcNow };
+            db.Telemetrias.Add(t1);
+
+            // Seed population cache (Limeira = 306000 population)
+            var cached = new CacheDadosIBGE
+            {
+                CodigoIBGE = "3526902",
+                NomeMunicipio = "Limeira",
+                UF = "SP",
+                PopulacaoEstimada = 306000,
+                AtualizadoEm = DateTime.UtcNow,
+                IsActive = true,
+                IsDeleted = false
+            };
+            db.CachesDadosIBGE.Add(cached);
+            await db.SaveChangesAsync();
+
+            var service = new IbgeService(db, new HttpClient());
+
+            // Act
+            var result = await service.ObterDadosMercadoAdminAsync();
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            var list = result.Data.ToList();
+            Assert.Single(list);
+            var data = list[0];
+            Assert.Equal("3526902", data.CodigoIBGE);
+            Assert.Equal("Limeira", data.Cidade);
+            Assert.Equal(306000, data.PopulacaoEstimada);
+            Assert.Equal(1, data.QuantidadeUnidades);
+            Assert.Equal(150.0, data.ConsumoTotalKWh);
+            double expectedPenetration = (1.0 / 306000.0) * 100.0;
+            Assert.Equal(Math.Round(expectedPenetration, 4), data.TaxaAdesaoPercentual);
+        }
+
         #endregion
 
         #region CLIMA SERVICE TESTS
@@ -213,6 +268,7 @@ namespace GreenEnergy.Tests
             private readonly ApiResponse<IbgeMunicipioResponseDTO> _response;
             public FakeIbgeService(ApiResponse<IbgeMunicipioResponseDTO> response) => _response = response;
             public Task<ApiResponse<IbgeMunicipioResponseDTO>> ObterMunicipioPorCodigoAsync(string codigo) => Task.FromResult(_response);
+            public Task<ApiResponse<IEnumerable<MercadoCidadeResponseDTO>>> ObterDadosMercadoAdminAsync() => throw new NotImplementedException();
         }
 
         #endregion
@@ -324,6 +380,77 @@ namespace GreenEnergy.Tests
             Assert.Equal(20.0, comp.DiferencaPercentual);
             Assert.Contains("20", comp.Mensagem);
             Assert.Contains("a mais que a média regional", comp.Mensagem);
+        }
+
+        #endregion
+
+        #region ADMIN DASHBOARD CONTROLLER TESTS
+
+        [Fact]
+        public void AdminDashboardController_ShouldHaveAuthorizeAdminAttribute()
+        {
+            // Arrange & Act
+            var type = typeof(AdminDashboardController);
+            var authorizeAttr = type.GetCustomAttributes(typeof(AuthorizeAttribute), true)
+                .FirstOrDefault() as AuthorizeAttribute;
+
+            // Assert
+            Assert.NotNull(authorizeAttr);
+            Assert.Equal("Admin", authorizeAttr.Roles);
+        }
+
+        [Fact]
+        public void AdminDashboardController_GetMercadoIbge_ShouldHaveHttpGetAttribute()
+        {
+            // Arrange & Act
+            var method = typeof(AdminDashboardController).GetMethod(nameof(AdminDashboardController.GetMercadoIbge));
+            var httpGetAttr = method?.GetCustomAttributes(typeof(HttpGetAttribute), true)
+                .FirstOrDefault() as HttpGetAttribute;
+
+            // Assert
+            Assert.NotNull(method);
+            Assert.NotNull(httpGetAttr);
+            Assert.Equal("mercado-ibge", httpGetAttr.Template);
+        }
+
+        [Fact]
+        public async Task AdminDashboardController_GetMercadoIbge_ShouldReturnOkWithData()
+        {
+            // Arrange
+            var db = GetInMemoryDbContext();
+            
+            // Seed active unit
+            var u1 = new UnidadeConsumidora { Id = 20, UsuarioId = 1, CEP = "13480000", Cidade = "Limeira", Estado = "SP", CodigoIBGE = "3526902", IsActive = true, IsDeleted = false };
+            db.UnidadesConsumidoras.Add(u1);
+            
+            // Seed population cache (Limeira = 306000 population)
+            var cached = new CacheDadosIBGE
+            {
+                CodigoIBGE = "3526902",
+                NomeMunicipio = "Limeira",
+                UF = "SP",
+                PopulacaoEstimada = 306000,
+                AtualizadoEm = DateTime.UtcNow,
+                IsActive = true,
+                IsDeleted = false
+            };
+            db.CachesDadosIBGE.Add(cached);
+            await db.SaveChangesAsync();
+
+            var service = new IbgeService(db, new HttpClient());
+            var controller = new AdminDashboardController(null!, service);
+
+            // Act
+            var actionResult = await controller.GetMercadoIbge();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(actionResult);
+            var apiResponse = Assert.IsType<ApiResponse<IEnumerable<MercadoCidadeResponseDTO>>>(okResult.Value);
+            Assert.True(apiResponse.Success);
+            Assert.NotNull(apiResponse.Data);
+            var list = apiResponse.Data.ToList();
+            Assert.Single(list);
+            Assert.Equal("Limeira", list[0].Cidade);
         }
 
         #endregion

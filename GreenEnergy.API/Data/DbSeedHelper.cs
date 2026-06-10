@@ -41,6 +41,7 @@ namespace GreenEnergy.API.Data
             db.Perfis.Where(p => p.UsuarioId != 1).ExecuteDelete();
             db.Usuarios.Where(u => u.Id != 1).ExecuteDelete();
             db.AuditLogs.ExecuteDelete();
+            db.CachesDadosIBGE.ExecuteDelete();
 
             var random = new Random();
 
@@ -202,8 +203,23 @@ namespace GreenEnergy.API.Data
                 // Distribuição de CEPs: a cada 5 clientes, usamos o mesmo CEP para agrupamento regional
                 var cepInfo = ceps[cIndex / 5];
 
-                // Cada cliente possui de 1 a 3 unidades
-                int numUnidades = random.Next(1, 4);
+                // Determinístico por CEP/Cidade para obter contagens exatas
+                int numUnidades = 2; // Palmas (cIndex 0..4 e 20..24) terá 10 * 2 = 20 unidades
+                if (cIndex >= 5 && cIndex <= 9) // Araguaína (cIndex 5..9)
+                {
+                    // Queremos 12 unidades no total para 5 clientes: 3, 3, 2, 2, 2
+                    numUnidades = (cIndex == 5 || cIndex == 6) ? 3 : 2;
+                }
+                else if (cIndex >= 10 && cIndex <= 14) // Guaraí
+                {
+                    // Queremos 5 unidades no total para 5 clientes: 1, 1, 1, 1, 1
+                    numUnidades = 1;
+                }
+                else if (cIndex >= 15 && cIndex <= 19) // Paraíso do Tocantins
+                {
+                    // Queremos 8 unidades no total para 5 clientes: 2, 2, 2, 1, 1
+                    numUnidades = (cIndex <= 17) ? 2 : 1;
+                }
                 for (int u = 1; u <= numUnidades; u++)
                 {
                     var tipoImovel = (TipoImovel)random.Next(3);

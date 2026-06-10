@@ -15,7 +15,8 @@ import {
   Users,
   Settings,
   ShieldAlert,
-  Leaf
+  Leaf,
+  Compass
 } from 'lucide-react'
 
 export const Sidebar: React.FC = () => {
@@ -53,6 +54,7 @@ export const Sidebar: React.FC = () => {
           { to: '/admin/tarifas', label: 'Tarifas', icon: <DollarSign size={20} /> },
           { to: '/admin/configuracoes/apis', label: 'Config. APIs', icon: <Settings size={20} /> },
           { to: '/admin/auditoria', label: 'Auditoria', icon: <ShieldAlert size={20} /> },
+          { to: '/admin/mercado', label: 'Penetração de Mercado', icon: <Compass size={20} /> },
         ]
       default:
         return []

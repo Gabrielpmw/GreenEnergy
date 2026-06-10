@@ -38,6 +38,7 @@ import { OperadorNovo as AdminOperadorNovo } from './pages/admin/OperadorNovo'
 import { Tarifas as AdminTarifas } from './pages/admin/Tarifas'
 import { ConfigApis as AdminConfigApis } from './pages/admin/ConfigApis'
 import { Auditoria as AdminAuditoria } from './pages/admin/Auditoria'
+import { AdminMercadoIbge } from './pages/admin/AdminMercadoIbge'
 
 export const router = createBrowserRouter([
   {
@@ -116,6 +117,7 @@ export const router = createBrowserRouter([
       { path: 'tarifas', element: <AdminTarifas /> },
       { path: 'configuracoes/apis', element: <AdminConfigApis /> },
       { path: 'auditoria', element: <AdminAuditoria /> },
+      { path: 'mercado', element: <AdminMercadoIbge /> },
       { path: '', element: <Navigate to="dashboard" replace /> },
     ],
   },

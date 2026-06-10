@@ -10,4 +10,15 @@ namespace GreenEnergy.API.Models.DTOs
         public int PopulacaoEstimada { get; set; }
         public DateTime AtualizadoEm { get; set; }
     }
+
+    public class MercadoCidadeResponseDTO
+    {
+        public string CodigoIBGE { get; set; } = null!;
+        public string Cidade { get; set; } = null!;
+        public string Estado { get; set; } = null!;
+        public int PopulacaoEstimada { get; set; }
+        public int QuantidadeUnidades { get; set; }
+        public double TaxaAdesaoPercentual { get; set; }
+        public double ConsumoTotalKWh { get; set; }
+    }
 }
