@@ -14,6 +14,8 @@ interface Sensor {
   status: string
   ultimoSinal?: string
   observacao?: string
+  dispositivoId?: number | null
+  dispositivoNome?: string | null
 }
 
 export const Sensores: React.FC = () => {
@@ -145,6 +147,11 @@ export const Sensores: React.FC = () => {
                     <div style={{ fontWeight: '600', color: 'var(--gray-900)' }}>
                       {s.modeloSensor}
                     </div>
+                    {s.dispositivoNome && (
+                      <div style={{ fontSize: '12px', color: 'var(--gray-500)', marginTop: '2px' }}>
+                        Aparelho: <strong>{s.dispositivoNome}</strong>
+                      </div>
+                    )}
                     {s.observacao && (
                       <div style={{ fontSize: '12px', color: 'var(--green-700)', marginTop: '4px', fontStyle: 'italic' }}>
                         Obs: {s.observacao}
@@ -170,6 +177,7 @@ export const Sensores: React.FC = () => {
                         onChange={(e) => {
                           const val = e.target.value
                           if (val === '0') handleUpdateStatus(s.id, 0, 'Disponível')
+                          if (val === '1') handleUpdateStatus(s.id, 1, 'Em Uso')
                           if (val === '2') handleUpdateStatus(s.id, 2, 'Manutenção')
                           if (val === '3') handleUpdateStatus(s.id, 3, 'Com Defeito')
                         }}
@@ -182,7 +190,10 @@ export const Sensores: React.FC = () => {
                           cursor: 'pointer'
                         }}
                       >
-                        <option value="" disabled>Alterar saúde...</option>
+                         <option value="" disabled>Alterar saúde...</option>
+                        {s.status.toLowerCase() !== 'emuso' && s.dispositivoId && (
+                          <option value="1">Voltar ao Normal (Em Uso)</option>
+                        )}
                         {s.status.toLowerCase() !== 'disponivel' && s.status.toLowerCase() !== 'emuso' && (
                           <option value="0">Marcar Disponível (Liberar)</option>
                         )}

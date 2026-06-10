@@ -98,7 +98,7 @@ namespace GreenEnergy.API.Services
                 return new ApiResponse<SensorResponseDTO>("Sensor não encontrado.");
             }
 
-            if (status != SensorStatus.EmUso && sensor.DispositivoId.HasValue)
+            if (status == SensorStatus.Disponivel && sensor.DispositivoId.HasValue)
             {
                 sensor.DispositivoId = null;
             }
