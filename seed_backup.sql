@@ -1,6 +1,9 @@
-﻿-- GreenEnergy DB Seed Backup
+-- GreenEnergy DB Seed Backup
 -- Generated on 06/08/2026 19:02:22
 USE [GreenEnergyDB];
+GO
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
 GO
 
 EXEC sp_MSforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL';
