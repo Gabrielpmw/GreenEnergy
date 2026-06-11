@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { DollarSign, Plus, RefreshCw, ToggleLeft, ToggleRight } from 'lucide-react'
+import { DollarSign, Plus, RefreshCw } from 'lucide-react'
 import { Spinner } from '../../components/ui/Spinner'
-import { StatusBadge } from '../../components/ui/StatusBadge'
-import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import { useToast } from '../../components/ui/Toast'
 import { formatNumber } from '../../utils/format'
 import api from '../../services/api'
@@ -29,9 +27,7 @@ export const Tarifas: React.FC = () => {
   const [bandeiraVal, setBandeiraVal] = useState<number>(0) // 0 = Verde, 1 = Amarela, etc.
   const [valorKWh, setValorKWh] = useState('')
 
-  // Modal de Confirmação
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedTariff, setSelectedTariff] = useState<Tarifa | null>(null)
+
 
   const fetchTarifas = async (silent = false) => {
     try {
@@ -97,33 +93,6 @@ export const Tarifas: React.FC = () => {
     }
   }
 
-  const handleToggleStatusClick = (tarifa: Tarifa) => {
-    setSelectedTariff(tarifa)
-    setIsModalOpen(true)
-  }
-
-  const handleConfirmToggleStatus = async () => {
-    if (!selectedTariff) return
-
-    const { id, isActive } = selectedTariff
-    const nextState = !isActive
-    try {
-      const res = await api.patch(`/tarifas/${id}/status?active=${nextState}`)
-      if (res.data.success) {
-        addToast(`Tarifa foi ${nextState ? 'ativada' : 'desativada'} com sucesso!`, 'success')
-        fetchTarifas(true) // Recarrega para obter vigência correta e a nova ativa
-      } else {
-        addToast(res.data.message || 'Erro ao alterar status da tarifa.', 'error')
-      }
-    } catch (err: any) {
-      console.error(`Erro ao alterar status da tarifa ${id}:`, err)
-      const errorMsg = err.response?.data?.message || 'Falha ao alterar status da tarifa no servidor.'
-      addToast(errorMsg, 'error')
-    } finally {
-      setIsModalOpen(false)
-      setSelectedTariff(null)
-    }
-  }
 
   // Cores CSS dos Cards baseados na bandeira
   const getTariffCardClass = (band: string | undefined) => {
@@ -293,8 +262,6 @@ export const Tarifas: React.FC = () => {
                       <th style={{ padding: '16px' }}>Bandeira</th>
                       <th style={{ padding: '16px' }}>Valor (kWh)</th>
                       <th style={{ padding: '16px' }}>Vigência Inicial</th>
-                      <th style={{ padding: '16px' }}>Status</th>
-                      <th style={{ padding: '16px', textAlign: 'right' }}>Ação</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -314,42 +281,6 @@ export const Tarifas: React.FC = () => {
                         <td style={{ padding: '16px', color: 'var(--gray-500)' }}>
                           {new Date(t.vigenciaInicio).toLocaleDateString('pt-BR')} {new Date(t.vigenciaInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </td>
-
-                        {/* Status */}
-                        <td style={{ padding: '16px' }}>
-                          <StatusBadge status={t.isActive ? 'ativo' : 'desativada'} label={t.isActive ? 'Ativa' : 'Inativa'} />
-                        </td>
-
-                        {/* Ação */}
-                        <td style={{ padding: '16px', textAlign: 'right' }}>
-                          <button
-                            onClick={() => handleToggleStatusClick(t)}
-                            style={{
-                              backgroundColor: 'transparent',
-                              border: 'none',
-                              cursor: 'pointer',
-                              padding: '6px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              color: t.isActive ? 'var(--red-500)' : 'var(--green-700)',
-                              fontSize: '13px',
-                              fontWeight: '500'
-                            }}
-                          >
-                            {t.isActive ? (
-                              <>
-                                <ToggleRight size={22} />
-                                Desativar
-                              </>
-                            ) : (
-                              <>
-                                <ToggleLeft size={22} />
-                                Ativar
-                              </>
-                            )}
-                          </button>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -359,21 +290,6 @@ export const Tarifas: React.FC = () => {
           </div>
         </>
       )}
-
-      {/* Modal de Confirmação */}
-      <ConfirmModal
-        isOpen={isModalOpen}
-        title={selectedTariff?.isActive ? 'Desativar Tarifa' : 'Ativar Tarifa'}
-        message={`Deseja realmente ${selectedTariff?.isActive ? 'desativar' : 'ativar'} esta tarifa? Isso impactará o cálculo financeiro do ecossistema.`}
-        confirmText={selectedTariff?.isActive ? 'Desativar' : 'Ativar'}
-        cancelText="Cancelar"
-        isDestructive={selectedTariff?.isActive}
-        onConfirm={handleConfirmToggleStatus}
-        onCancel={() => {
-          setIsModalOpen(false)
-          setSelectedTariff(null)
-        }}
-      />
     </div>
   )
 }
