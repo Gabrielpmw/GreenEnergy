@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { Compass, Users, Zap, MapPin, RefreshCw, AlertTriangle, ArrowRight } from 'lucide-react'
+import { Compass, Zap, MapPin, RefreshCw } from 'lucide-react'
 import { Spinner } from '../../components/ui/Spinner'
 import { SkeletonCard, SkeletonRow } from '../../components/ui/Skeleton'
 import { EmptyState } from '../../components/ui/EmptyState'
