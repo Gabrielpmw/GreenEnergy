@@ -1,0 +1,27 @@
+# Build folders
+[Bb]in/
+[Oo]bj/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Agentic work directories
+.agents/
+.cursor/
+.windsurf/
+
+# Database files
+*.mdf
+*.ldf
+*.db
+*.sqlite

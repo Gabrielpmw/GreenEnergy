@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="GreenEnergy.API/GreenEnergy.API.csproj" />
+  <Project Path="GreenEnergy.Tests/GreenEnergy.Tests.csproj" />
+  <Project Path="GreenEnergy.Worker/GreenEnergy.Worker.csproj" />
+</Solution>

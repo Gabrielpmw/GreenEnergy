@@ -1,0 +1,337 @@
+/* Estilos do Dashboard e Telas do Cliente */
+
+.dashboard-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  margin-bottom: 32px;
+}
+
+.dashboard-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 8px;
+}
+
+.dashboard-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--gray-500);
+}
+
+/* Grid de Cards de Métricas (KPIs) */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.kpi-card {
+  background-color: var(--white-card);
+  border: 1px solid var(--white-muted);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.kpi-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  color: var(--gray-500);
+}
+
+.kpi-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background-color: var(--green-50);
+  color: var(--green-700);
+}
+
+.kpi-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 4px;
+}
+
+.kpi-footer {
+  font-size: var(--font-size-xs);
+  color: var(--gray-500);
+  margin-top: 8px;
+}
+
+/* Diferenciação de Bandeira Tarifária (KPI) */
+.kpi-card.tariff-green {
+  border-left: 4px solid var(--green-500);
+}
+.kpi-card.tariff-green .kpi-icon-wrapper {
+  background-color: var(--green-50);
+  color: var(--green-700);
+}
+
+.kpi-card.tariff-yellow {
+  border-left: 4px solid var(--amber-400);
+}
+.kpi-card.tariff-yellow .kpi-icon-wrapper {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.kpi-card.tariff-red {
+  border-left: 4px solid var(--red-500);
+}
+.kpi-card.tariff-red .kpi-icon-wrapper {
+  background-color: #fee2e2;
+  color: var(--red-500);
+}
+
+/* Layout de Perfil do Cliente */
+.profile-card {
+  background-color: var(--white-card);
+  border: 1px solid var(--white-muted);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-sm);
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+.profile-section-title {
+  font-size: var(--font-size-lg);
+  color: var(--gray-900);
+  font-weight: 600;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--white-muted);
+  padding-bottom: 8px;
+}
+
+.profile-section-title.danger {
+  color: var(--red-500);
+  border-color: #fee2e2;
+}
+
+.profile-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 576px) {
+  .profile-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.profile-divider {
+  height: 1px;
+  background-color: var(--white-muted);
+  margin: 32px 0;
+}
+
+/* Listagem de Unidades Consumidoras */
+.units-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.units-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.unit-card {
+  background-color: var(--white-card);
+  border: 1px solid var(--white-muted);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 180px;
+}
+
+.unit-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--green-300);
+}
+
+.unit-card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.unit-type-badge {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+}
+
+.unit-type-badge.residencial {
+  background-color: var(--green-50);
+  color: var(--green-700);
+}
+
+.unit-type-badge.comercial {
+  background-color: #eff6ff;
+  color: var(--blue-500);
+}
+
+.unit-type-badge.industrial {
+  background-color: #faf5ff;
+  color: var(--purple-500);
+}
+
+.unit-address {
+  font-size: var(--font-size-sm);
+  color: var(--gray-500);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.unit-card-footer {
+  font-size: var(--font-size-xs);
+  color: var(--green-700);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Detalhe da Unidade */
+.unit-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .unit-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.unit-info-card {
+  background-color: var(--white-card);
+  border: 1px solid var(--white-muted);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.unit-devices-card {
+  background-color: var(--white-card);
+  border: 1px solid var(--white-muted);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Listagem de Dispositivos na Unidade */
+.device-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.device-row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background-color: var(--white-soft);
+  border: 1px solid var(--white-muted);
+  transition: border-color var(--transition-fast);
+}
+
+.device-row-item:hover {
+  border-color: var(--green-300);
+}
+
+.device-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.device-icon-container {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background-color: var(--green-50);
+  color: var(--green-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.device-text-title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.device-text-power {
+  font-size: var(--font-size-xs);
+  color: var(--gray-500);
+}
+
+/* Nova Unidade Cadastro */
+.form-card {
+  background-color: var(--white-card);
+  border: 1px solid var(--white-muted);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-sm);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.cep-loading-indicator {
+  font-size: var(--font-size-xs);
+  color: var(--green-700);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

@@ -1,0 +1,42 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace GreenEnergy.API.Models.DTOs
+{
+    public class CreateSensorRequestDTO
+    {
+        [Required(ErrorMessage = "O modelo do sensor é obrigatório.")]
+        public string ModeloSensor { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "O número de série é obrigatório.")]
+        public string NumeroSerie { get; set; } = string.Empty;
+
+        public string? Observacao { get; set; }
+    }
+
+    public class UpdateSensorRequestDTO
+    {
+        [Required(ErrorMessage = "O modelo do sensor é obrigatório.")]
+        public string ModeloSensor { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "O número de série é obrigatório.")]
+        public string NumeroSerie { get; set; } = string.Empty;
+
+        public string? Observacao { get; set; }
+    }
+
+    public class SensorResponseDTO
+    {
+        public int Id { get; set; }
+        public int? DispositivoId { get; set; }
+        public string? DispositivoNome { get; set; }
+        public string ModeloSensor { get; set; } = string.Empty;
+        public string NumeroSerie { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty; // Disponivel, EmUso, Manutencao, Defeito
+        public DateTime? UltimoSinal { get; set; }
+        public string? Observacao { get; set; }
+        public string? ClienteNome { get; set; }
+        public string? ClienteCpf { get; set; }
+    }
+}
+
